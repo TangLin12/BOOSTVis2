@@ -1,0 +1,212 @@
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <title>Visual Analysis for Boosting Methods</title>
+    <link rel="shortcut icon" type="image/x-ico" href="favicon.ico">
+    <meta charset="UTF-8">
+    <!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css" media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="css/introjs.css"/>
+    <link type="text/css" rel="stylesheet" href="css/d3.css">
+    <link type="text/css" rel="stylesheet" href="css/tree.css">
+    <link type="text/css" rel="stylesheet" href="css/treeviewer-index.css">
+    <link type="text/css" rel="stylesheet" href="css/style.css">
+    <link type="text/css" rel="stylesheet" href="css/style_new.css">
+</head>
+<body>
+<div class="self-column" id="self-column-1">
+    <div class="block-container" id="block-1-1">
+        <div class="input-field" style="margin-right: 2%">
+            <span class="help-button">Help</span>
+        </div>
+        <div class="input-field">
+            <label for="framework-select">Dataset</label>
+            <select id="framework-select">
+                <option value="lightgbm-otto-8-0.1-800" selected>LightGBM-8-0.1</option>
+            </select>
+            <label for="set-select">Set Type</label>
+            <select id="set-select">
+                <option value="train" >train</option>
+                <option value="valid" >valid</option>
+            </select>
+        </div>
+        <div class="input-field">
+            <a class="btn" id="load-dataset" data-hint="click to load dataset" data-position="right">GO</a>
+        </div>
+    </div>
+
+    <div class="block-header" style="display: none;">
+        <span class="title">Performance Curve</span>
+        <span style="margin-left: 5%;">Iteration:&nbsp;</span>
+        <span style="color: white;" id="iteration-indicator"></span>
+        <div class="header-button">
+            <form id="metric-selector">
+                <input type="radio" name="metric" id="multi_logloss" value="logloss" checked/>
+                <label class="header-label" for="multi_logloss">Logloss</label>
+                <input type="radio" name="metric" id="metric_accuracy" value="accuracy" />
+                <label class="header-label" for="metric_accuracy">Accuracy</label>
+                <input type="radio" name="metric" id="metric_margin_mean" value="margin-mean"/>
+                <label class="header-label" for="metric_margin_mean">Margin Mean</label>
+            </form>
+        </div>
+    </div>
+    <div class="block-container" id="block-1-2" style="display: none;">
+        <div class="chart-wrapper" id="line-chart"></div>
+    </div>
+
+    <div class="block-header class-level-header">
+        <span class="title">Class</span>
+        <span class="header-button" id="back-button">Close</span>
+    </div>
+    <div class="block-container" id="block-1-4">
+        <div class="chart-wrapper" id="conf-mat"></div>
+
+    </div>
+
+    <div class="block-container" id="block-1-3">
+        <div class="subblock-container" id="subblock-1-3-1">
+            <div id="class-selector-container"></div>
+        </div>
+        <div class="subblock-container" id="confidence-lines" style="display:none"></div>
+        <div class="subblock-container" id="subblock-1-3-2">
+            <div class="subblock-header instance-level-header">
+                <span class="title">Instance</span>
+                <span id="restore-button" class="header-button">Restore</span>
+            </div>
+            <div id="tsne-sample-navigation"></div>
+        </div>
+    </div>
+</div>
+
+<div class="self-column" id="self-column-2">
+    <div class="block-header">
+        <span class="title">Classifier</span>
+    </div>
+    <div class="block-container" id="block-2-1">
+        <div class="subblock-header" >
+            <div class="">
+                Tree Cluster
+                <span class="parameter-setting" style="display: none;">Number of Clusters:
+                    <input id="cluster-number" type="number" placeholder="" value="5" min="3" max="10">
+                    <i id="cluster-number-confirm" class="material-icons tiny">play_circle_filled</i>
+                </span>
+            </div>
+        </div>
+        <div id="representative-trees">
+
+        </div>
+        <div class="" id="tree-size-barchart"></div>
+    </div>
+
+    <div class="block-header" style="margin-top: 5%">
+        <span class="noob-title">Decision Tree</span>
+        <span id="tree-class-indicator"></span>
+        <label for="tree-iteration-indicator" style="margin-left: 3%; color: grey">Iteration:&nbsp;</label>
+        <input id="tree-iteration-indicator" type="number" min="1">
+        <span class="page-turner turner-tree-prev">&#8592</span>
+        <span class="page-turner turner-tree-next">&#8594</span>
+        <span id="clear-clusters" class="header-button">Clear</span>
+    </div>
+    <div class="" id="block-2-2" style="margin-bottom: 1%">
+        <div class="chart-wrapper" id="tree-inspector"></div>
+    </div>
+</div>
+
+<div class="self-column" id="self-column-3">
+    <div class="block-header">
+        <span class="title" style="padding: 0.7% 1.2% 0.5% 1.2%">Feature</span>
+        <span id="feature-up" class="page-turner">&#8593</span>
+        <span id="feature-down" class="page-turner">&#8595</span>
+        <span id="ranking-hint">Ranked by Importance</span>
+    </div>
+    <div class="block-container" id="block-3-1">
+        <div class="chart-wrapper" id="feature-mat"></div>
+    </div>
+</div>
+<div id="preloader">
+    <div class="row">
+        <span id="loading-header">Loading Progress</span>
+    </div>
+    <div class="row" style="margin-bottom: 2px;">
+        <span>Model</span>
+        <span class="progress-indicator model-progress">- -</span>
+        <div class="progress">
+            <div id="model-progress" class="determinate" style="width: 0%"></div>
+        </div>
+        <span>Data</span>
+        <span class="progress-indicator data-progress">- -</span>
+        <div class="progress">
+            <div id="data-progress" class="determinate" style="width: 0%"></div>
+        </div>
+        <span>Misc</span>
+        <span class="progress-indicator misc-progress">- -</span>
+        <div class="progress">
+            <div id="misc-progress" class="determinate" style="width: 0%"></div>
+        </div>
+        <span id="hide-progress" style="float: right; cursor: hand; display: none;">hide</span>
+    </div>
+</div>
+<div class="origin-holder" style="display: none">
+    <div class="preloader-wrapper small active">
+        <div class="spinner-layer spinner-blue">
+            <div class="circle-clipper left">
+                <div class="circle"></div>
+            </div><div class="gap-patch">
+            <div class="circle"></div>
+        </div><div class="circle-clipper right">
+            <div class="circle"></div>
+        </div>
+        </div>
+
+        <div class="spinner-layer spinner-red">
+            <div class="circle-clipper left">
+                <div class="circle"></div>
+            </div><div class="gap-patch">
+            <div class="circle"></div>
+        </div><div class="circle-clipper right">
+            <div class="circle"></div>
+        </div>
+        </div>
+
+        <div class="spinner-layer spinner-yellow">
+            <div class="circle-clipper left">
+                <div class="circle"></div>
+            </div><div class="gap-patch">
+            <div class="circle"></div>
+        </div><div class="circle-clipper right">
+            <div class="circle"></div>
+        </div>
+        </div>
+
+        <div class="spinner-layer spinner-green">
+            <div class="circle-clipper left">
+                <div class="circle"></div>
+            </div><div class="gap-patch">
+            <div class="circle"></div>
+        </div><div class="circle-clipper right">
+            <div class="circle"></div>
+        </div>
+        </div>
+    </div>
+</div>
+</body>
+<script src="js/lib/jquery-2.1.3.min.js"></script>
+<script src="js/lib/d3.v3.min.js"></script>
+<script src="js/lib/underscore-min.js"></script>
+<script src="js/lib/intro.js"></script>
+<script src="js/lib/jszip.min.js"></script>
+<script src="js/lib/jszip-utils.js"></script>
+<script src="js/preloader.js"></script>
+<script src="js/color_manager.js"></script>
+<script src="js/globals.js"></script>
+<script src="js/fake_random.js"></script>
+<script src="js/hooks.js"></script>
+<script src="js/helper.js"></script>
+<script src="js/rawdata-processor.js"></script>
+<script src="js/conf-mat.js"></script>
+<script src="js/confidence-lines.js"></script>
+<script src="js/feature-mat.js"></script>
+<script src="js/line-chart.js"></script>
+<script src="js/class-selector.js"></script>
+<script src="js/main.js"></script>
+</html>

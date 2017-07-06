@@ -1,0 +1,102 @@
+﻿.node {
+    cursor: pointer;
+  }
+
+  .overlay{
+      /*background-color: rgba(238,238,238,0.8);*/
+  }
+   
+  .nodeRect {
+      fill-opacity: 0;
+      display: none;
+      stroke: #616161;
+      /*stroke: #428CCA;*/
+      stroke-width: 2px;
+  }
+
+   .link.highlight {
+      stroke: #616161;
+      /*stroke: #428CCA;*/
+      stroke-width: 2px;
+  }
+  .nodeRect.show {
+      display: block;
+  }
+  .nodeRect.highlight {
+      display: block;
+      stroke: #f57c00 !important;
+  }
+
+  .nodeText.highlight {
+      fill: #f57c00 
+  }
+   
+  .nodeText {
+    font-size:12px; 
+    font-family:微软雅黑;
+ 
+  }
+
+  /*.nodeRest {
+      fill: #616161;
+  }*/
+
+  .nodeDepth {
+      fill: #616161;
+      /*fill: #259b24;*/
+  }
+  .dragRect {
+      fill: rgb(215, 215, 215);
+      stroke: rgb(85, 85, 85);
+  }
+  .link {
+    fill: none;
+    /*stroke: #ccc;*/
+    stroke: #ccc;
+    stroke-width: 1px;
+  }
+   .restlink {
+    fill: none;
+    /*stroke: #ccc;*/
+    stroke: #ccc;
+    stroke-width: 1px;
+  }
+
+ 
+
+  .templink {
+    fill: none;
+    stroke: red;
+    stroke-width: 3px;
+  }
+
+  .ghostCircle.show{
+      display:block;
+  }
+
+  .ghostCircle, .activeDrag .ghostCircle{
+       display: none;
+  }
+
+  .userbottom.show {
+      display:block;
+  }
+  .userbottom {
+      display:none;
+  }
+
+  
+.svgIcon {
+    opacity: 0;
+    width: 12px;
+    height: 12px;
+}
+.svgIconShow {
+    width: 12px;
+    height: 12px;
+    opacity: 1;
+}
+
+.node:hover > .nodeSvg > .svgIcon{
+    opacity: 1;
+}

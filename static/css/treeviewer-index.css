@@ -1,0 +1,210 @@
+﻿#invisable-item {
+    position: absolute;
+    visibility: hidden;
+    display: block;
+}
+#word-cloud {
+    width: 100%;
+}
+.dataset {
+    position: relative;
+    display: block;
+    padding: 10px 15px;
+    margin-bottom: -1px;
+    border-bottom: 1px solid #dddddd;
+}
+.dataset > a {
+    color: gray;
+}
+.dataset.active > a {
+    color: #428CCA;
+}
+.wordCloudText {
+    cursor: default;
+    user-select: none;
+    pointer-events: visible;
+    line-height: 90%;
+    letter-spacing: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.wordCloudText:hover {
+    pointer-events: visible;
+    fill: #428CCA;
+    background-color: #555;
+}
+
+.documentList {
+    /*border-bottom: 1px solid #eee;
+    padding-top: 10px;*/
+}
+.documentList > .document-id {
+    display: none;
+}
+
+.documentList > .document-content {
+    display: none;
+}
+.mycol {
+    float: left;
+    position: relative;
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+.control-panel {
+    width: 12%
+}
+.tree-panel {
+    width: 70%;
+}
+.tree-panel.expend {
+    width: 82%;
+}
+.info-panel {
+    width: 18%;
+    /*margin-left: 10px;
+    margin-right: 10px;*/
+}
+.panel {
+    margin-bottom: 5px;
+}
+
+.tab-content {
+    margin: 10px 10px;
+}
+
+#document-modal-content {
+    white-space: pre; 
+    word-wrap: break-word; 
+    white-space: -moz-pre-wrap;
+    white-space: pre-wrap;
+}
+
+@-webkit-keyframes fadeInRight {
+  0% {
+    opacity: 0;
+    -webkit-transform: translateX(20px);
+    transform: translateX(20px);
+  }
+
+  100% {
+    opacity: 1;
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  0% {
+    opacity: 0;
+    -webkit-transform: translateX(20px);
+    -ms-transform: translateX(20px);
+    transform: translateX(20px);
+  }
+
+  100% {
+    opacity: 1;
+    -webkit-transform: translateX(0);
+    -ms-transform: translateX(0);
+    transform: translateX(0);
+  }
+}
+
+@-webkit-keyframes fadeOutRight {
+  0% {
+    opacity: 1;
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+
+  100% {
+    opacity: 0;
+    -webkit-transform: translateX(20px);
+    transform: translateX(20px);
+  }
+}
+
+@keyframes fadeOutRight {
+  0% {
+    opacity: 1;
+    -webkit-transform: translateX(0);
+    -ms-transform: translateX(0);
+    transform: translateX(0);
+  }
+
+  100% {
+    opacity: 0;
+    -webkit-transform: translateX(20px);
+    -ms-transform: translateX(20px);
+    transform: translateX(20px);
+  }
+}
+
+.modal.fade.myFade .modal-dialog {
+  -webkit-transform: translate(25%, 0);
+      -ms-transform: translate(25%, 0);
+          transform: translate(25%, 0);
+  -webkit-transition: -webkit-transform 0.3s ease-out;
+     -moz-transition: -moz-transform 0.3s ease-out;
+       -o-transition: -o-transform 0.3s ease-out;
+          transition: transform 0.3s ease-out;
+}
+
+.modal.fade.myFade.in .modal-dialog {
+  -webkit-transform: translate(0, 0);
+      -ms-transform: translate(0, 0);
+          transform: translate(0, 0);
+}
+
+.fade.myFade {
+  opacity: 0;
+  -webkit-transition: opacity 0.15s linear;
+          transition: opacity 0.15s linear;
+}
+
+.fade.myFade.in {
+  opacity: 1;
+}
+
+.modal-backdrop.fade.myFade {
+  opacity: 0;
+  filter: alpha(opacity=0);
+}
+
+a.dataset {
+    cursor: pointer;
+}
+
+a.dataset.active {
+    cursor: default;
+}
+
+.loading-icon {
+    width: 20px;
+    height: 20px;
+    display: none;
+}
+
+#relayout > .loading-icon {
+    margin-right: 10px;
+}
+
+.dataset-loading-icon {
+    margin-left: 10px;
+}
+
+.button-group .close {
+    display: none;
+    font-size: 20px;
+}
+
+a:hover >.button-group > .close {
+    display:block;
+}
+
+.button-group > button.close {
+    margin-left: 5px;
+}
+
