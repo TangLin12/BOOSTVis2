@@ -1,19 +1,15 @@
 import configparser
 import json
-import time
 from os import makedirs
 from os.path import exists
-import shutil
+from ..datasets import load_otto
 
 import xgboost as xgb
 import numpy as np
 from sklearn.metrics import accuracy_score, confusion_matrix
 
-from logger import Logger
-
-from result.sampling import *
-from result.transform import *
-from result.tsne_context_aware import dimension_reduction2trajectory
+from ..logger import Logger
+from ..config import *
 
 
 def xgboost_test(identifier, training, testing, params, info):
@@ -25,9 +21,6 @@ def xgboost_test(identifier, training, testing, params, info):
 	num_test = testing_data.shape[0]
 
 	result_folder = join(*[PROJECT_ROOT, "result", identifier])
-	# if exists(result_folder):
-	# 	import shutil
-	# 	shutil.rmtree(result_folder)
 	if not exists(result_folder):
 		makedirs(result_folder)
 
@@ -113,40 +106,6 @@ def xgboost_test(identifier, training, testing, params, info):
 	import time
 	start_time = time.time()
 
-	# # predict using 400th iteration
-	# print("----------------")
-	# train_pred = bst.predict(training_mat, ntree_limit=400)
-	# test_pred = bst.predict(testing_mat, ntree_limit=400)
-	# train_decision = np.argmax(train_pred, axis=1)  # multiclass decision
-	# test_decision = np.argmax(test_pred, axis=1)
-    #
-	# cm = confusion_matrix(testing_label, test_decision)  # k * k matrix
-	# class_accuracy = []
-	# for i, row in enumerate(cm):
-	# 	class_accuracy.append(row[i] / np.sum(row))
-	# print(class_accuracy)
-	# train_accuracy = accuracy_score(training_label, train_decision)  # scalar
-	# test_accuracy = accuracy_score(testing_label, test_decision)
-	# print(train_accuracy, test_accuracy)
-	# print("----------------")
-    #
-	# # predict using final iteration
-	# print("----------------")
-	# train_pred = bst.predict(training_mat, ntree_limit=iteration_count)
-	# test_pred = bst.predict(testing_mat, ntree_limit=iteration_count)
-	# train_decision = np.argmax(train_pred, axis=1)  # multiclass decision
-	# test_decision = np.argmax(test_pred, axis=1)
-    #
-	# cm = confusion_matrix(training_label, train_decision)  # k * k matrix
-	# class_accuracy = []
-	# for i, row in enumerate(cm):
-	# 	class_accuracy.append(row[i] / np.sum(row))
-	# print(class_accuracy)
-	# train_accuracy = accuracy_score(training_label, train_decision)  # scalar
-	# test_accuracy = accuracy_score(testing_label, test_decision)
-	# print(train_accuracy, test_accuracy)
-	# print("----------------")
-
 	for t in range(0, iteration_count):
 		train_pred = bst.predict(training_mat, ntree_limit=t + 1)
 		test_pred = bst.predict(testing_mat, ntree_limit=t + 1)
@@ -209,18 +168,8 @@ def xgboost_test(identifier, training, testing, params, info):
 			"accuracy-train": train_accuracy_list,
 			"accuracy-test": test_accuracy_list
 		}, curve_file, ensure_ascii=True)
-
-	postprocess_package(identifier)
-	from result.sampling_new import sampling_by_kldivergence_mean
-	sampling_by_kldivergence_mean(identifier)
-	from result.tsne_context_aware import tsne_by_blue_noise_sampling
-	tsne_by_blue_noise_sampling(identifier)
-	# sampling_by_posterior(identifier)
-	# calculate_tsne_trajectory(identifier)
 	print("done")
 
-
-from datasets import load_otto
 
 def run_xgboost_otto1():
 	training_data_sampled = False

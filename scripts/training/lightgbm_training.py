@@ -1,19 +1,14 @@
 import configparser
 import json
-import time
 from os import makedirs
-from os.path import exists
-import shutil
+from os.path import exists,join
 
 import lightgbm as lgb
 import numpy as np
 from sklearn.metrics import accuracy_score, confusion_matrix
 
-from logger import Logger
-
-from result.transform import *
-from result.tsne_context_aware import dimension_reduction2trajectory
-from result.sampling_new import *
+from ..logger import Logger
+from ..config import *
 
 
 def learning_rate_func(current_round):
@@ -237,59 +232,8 @@ def lightgbm_test(identifier, training, testing, params, info, full=False):
 			"accuracy-train": train_accuracy_list,
 			"accuracy-test": test_accuracy_list
 		}, curve_file, ensure_ascii=True)
-
-	postprocess_package(identifier)
-
-	# calculate_by_kldivergence_and_cosine(identifier)
-	# sampling_by_kldivergence_mean(identifier)
-	# sampling_by_posterior(identifier)
-	# calculate_tsne_trajectory(identifier)
 	print("done")
-
-from datasets import load_syntic_data
-def run_lightgbm_isolet():
-	dataset = load_syntic_data()
-	print("data loaded")
-	training_data, training_label = dataset["training"]
-	testing_data, testing_label = dataset["testing"]
-
-	iteration_count = 200
-
-	num_class = len(np.unique(training_label))
-	data_count, feature_count = training_data.shape
-
-	params = {
-		"tree_learner": "serial",
-		"is_train_metric": False,
-		"metric": ["multi_logloss", "multi_error"],
-		'task': 'train',
-		'max_depth': 6,
-		'learning_rate': 0.1,
-		'num_iterations': iteration_count,
-		'boosting_type': 'gbdt',
-		'objective': 'multiclass',
-		'min_data_in_leaf': 5,
-		'num_class': num_class,
-		'nthread': -1,
-		'seed': 777
-	}
-
-	info = {
-		"feature_count": feature_count,
-		"iteration_count": iteration_count,
-		"data_count": data_count,
-		"class_count": num_class
-	}
-
-	identifier = "lightgbm-syntic-6-0.1"
-
-	lightgbm_test(identifier, (training_data, training_label), (testing_data, testing_label), params,
-				  info, True)
 
 
 if __name__ == '__main__':
-	run_lightgbm_isolet()
-	# identifier = "lightgbm-isolet"
-	# postprocess_package(identifier)
-	# # sampling_by_posterior(identifier)
-	# dimension_reduction2trajectory(identifier)
+	pass

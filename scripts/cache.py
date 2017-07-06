@@ -6,12 +6,7 @@ from os.path import join, exists
 import math
 
 import configparser
-
-
 HTML_ROOT = getcwd()
-print(HTML_ROOT)
-
-app = Flask(__name__, static_url_path="/static")
 
 POSTERIOR_SPLIT_SIZE = 10
 import time

@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score, confusion_matrix
 
 #from logger import Logger
-from config import *
+from .config import *
 import pandas
 
 import scipy as sp

@@ -11,13 +11,8 @@ import pandas as pd
 
 from sklearn import datasets
 
-from data import mnist_dataset
-from config import *
-from result.sampling import *
-
-
 from sklearn.model_selection import StratifiedShuffleSplit
-from config import *
+from .config import *
 
 
 def naive_sample_debug(data, start, end):
@@ -45,18 +40,6 @@ def stratified_sampling(total, sampling_ratio, index_result=False):
 	test_data = data[test_sampled_index]
 	test_label = label[test_sampled_index]
 	return ((train_data, train_label), (test_data, test_label))
-
-
-def load_mnist():
-	# training = mnist_dataset.load_train_data()
-	# testing = mnist_dataset.load_test_data()
-	mnist_root = join(DATASET_ROOT, "mnist")
-	training = mnist_dataset.load_train_data(path=mnist_root)
-	testing = mnist_dataset.load_test_data(path=mnist_root)
-	return {
-		"training": training,
-		"testing": testing
-	}
 
 
 def load_hastie(n_samples=12000, random_state=1):
@@ -422,17 +405,6 @@ def persist_waveform2_valid():
 	raw_data += "_"
 	raw_data += "[" + ",".join([str(e) for e in training_label]) + "]"
 	with open(join(*[DATASET_ROOT, "Waveform2", "feature-raw-valid"]), "w") as fr_file:
-		fr_file.write(raw_data)
-
-
-def persist_mnist():
-	all_data = load_mnist()
-	training_data = all_data["training"][0]
-	training_label = all_data["training"][1]
-	raw_data = "[" + ",".join(["[" + ",".join([str(e) for e in r]) + "]" for r in training_data]) + "]"
-	raw_data += "_"
-	raw_data += "[" + ",".join([str(e) for e in training_label]) + "]"
-	with open(join(*[DATASET_ROOT, "mnist", "feature-raw"]), "w") as fr_file:
 		fr_file.write(raw_data)
 
 

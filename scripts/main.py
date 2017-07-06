@@ -1,6 +1,6 @@
-from training.lightgbm_training import lightgbm_test
-from training.xgboost_training import xgboost_test
-from datasets import *
+from .training.lightgbm_training import lightgbm_test
+from .training.xgboost_training import xgboost_test
+from .datasets import *
 
 
 def run_lightgbm_otto():
