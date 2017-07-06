@@ -7,7 +7,6 @@ from os.path import join, exists
 import math
 
 HTML_ROOT = getcwd()
-print(HTML_ROOT)
 
 app = Flask(__name__, static_url_path="/static")
 
@@ -22,9 +21,7 @@ from numpy import array
 
 
 @app.route('/api/confusion_matrix', methods=['GET'])
-def get_confusion_matrix():
-    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
-    dataset_identifier = request.args["dataset"]
+def get_confusion_matrix():    dataset_identifier = request.args["dataset"]
     type = int(request.args["is_train"])
     dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
     if type:
@@ -36,7 +33,6 @@ def get_confusion_matrix():
 
 @app.route('/api/feature-importance-tree-size', methods=['GET'])
 def get_feature_importance_tree_size():
-    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     dataset_identifier = request.args["dataset"]
     # type = int(request.args["is_train"])
     dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
@@ -47,7 +43,6 @@ def get_feature_importance_tree_size():
 
 @app.route('/api/manifest', methods=['GET'])
 def get_manifest():
-    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     dataset_identifier = request.args["dataset"]
     dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
     config = configparser.ConfigParser()
@@ -65,7 +60,6 @@ import time
 @app.route('/api/feature-raw-zipped', methods=['GET'])
 # @gzipped
 def get_raw_feature_zipped():
-    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     dataset_identifier = request.args["dataset"]
     dataset = dataset_identifier.split("-")[1]
     dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
@@ -111,7 +105,4 @@ from logging import FileHandler
 if __name__ == '__main__':
     start = time.time()
     root = join(*[HTML_ROOT, "result"])
-    # handler = FileHandler("server-" + str(int(start)) + ".log")
-    # app.logger.setLevel(logging.INFO)
-    # app.logger.addHandler(handler)
     app.run(port=8083, host="0.0.0.0", threaded=True)
