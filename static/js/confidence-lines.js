@@ -169,12 +169,12 @@ ConfidenceLines.prototype.canvas_mousedown = function (e) {
 
                     confidence_lines.render_instance_charts(confidence_lines.focused_class, cluster_label, cluster_id, confidence_lines.focused_segment, confidence_lines.focused_subsegment);
 
-                    on_time_series_cluster_selection_updated(_.map(confidence_lines.cluster_label_set, function (l, i) {
-                        return [
-                            confidence_lines.clusters[confidence_lines.cluster_label_set[i]][confidence_lines.cluster_id_set[i]],
-                            SELECTED_CLASSES[confidence_lines.cluster_label_set[i]]
-                        ];
-                    }));
+                    // on_time_series_cluster_selection_updated(_.map(confidence_lines.cluster_label_set, function (l, i) {
+                    //     return [
+                    //         confidence_lines.clusters[confidence_lines.cluster_label_set[i]][confidence_lines.cluster_id_set[i]],
+                    //         SELECTED_CLASSES[confidence_lines.cluster_label_set[i]]
+                    //     ];
+                    // }));
 
                     feature_matrix.render_feature_ranking_for_clusters();
                     break;
@@ -187,18 +187,40 @@ ConfidenceLines.prototype.canvas_mousedown = function (e) {
                 var cluster_label = line.k;
                 var cluster_id = line.i;
 
-                confidence_lines.cluster_label = cluster_label;
-                confidence_lines.cluster_id = cluster_id;
-
-                if (confidence_lines.cluster_label_set.length > 1) {
-                    confidence_lines.cluster_label_set = confidence_lines.cluster_label_set.slice(1, 4);
-                    confidence_lines.cluster_id_set = confidence_lines.cluster_id_set.slice(1, 4);
+                var clusterSetSize = confidence_lines.cluster_id_set.length;
+                var sameLabelCount = 0;
+                for (var i = clusterSetSize - 1;i >= 0;i--) {
+                    if (confidence_lines.cluster_label_set[i] == cluster_label) {
+                        sameLabelCount++;
+                        if(confidence_lines.cluster_id_set[i] == cluster_id) {
+                            confidence_lines.cluster_id_set.splice(i, 1);
+                            confidence_lines.cluster_label_set.splice(i, 1);
+                            if (i == clusterSetSize - 1) {
+                                confidence_lines.cluster_label = confidence_lines.cluster_label_set[-1];
+                                confidence_lines.cluster_id = confidence_lines.cluster_id_set[-1];
+                            }
+                            break;
+                        }
+                        if (sameLabelCount == 2) {
+                            confidence_lines.cluster_id_set.splice(i, 1);
+                            confidence_lines.cluster_label_set.splice(i, 1);
+                            confidence_lines.cluster_label_set.push(cluster_label);
+                            confidence_lines.cluster_id_set.push(cluster_id);
+                            confidence_lines.cluster_label = cluster_label;
+                            confidence_lines.cluster_id = cluster_id;
+                            break;
+                        }
+                    }
                 }
+                if (i == -1) {
+                    confidence_lines.cluster_label_set.push(cluster_label);
+                    confidence_lines.cluster_id_set.push(cluster_id);
+                    confidence_lines.cluster_label = cluster_label;
+                    confidence_lines.cluster_id = cluster_id;
+                }
+                //tree_inspector.update_cluster_information();
 
-                tree_inspector.update_cluster_information();
 
-                confidence_lines.cluster_label_set.push(cluster_label);
-                confidence_lines.cluster_id_set.push(cluster_id);
 
                 confidence_lines.update_cluster_alpha_value();
 
@@ -209,12 +231,12 @@ ConfidenceLines.prototype.canvas_mousedown = function (e) {
 
                 confidence_lines.render_instance_charts(confidence_lines.focused_class, cluster_label, cluster_id, confidence_lines.focused_segment, confidence_lines.focused_subsegment);
 
-                on_time_series_cluster_selection_updated(_.map(confidence_lines.cluster_label_set, function (l, i) {
-                    return [
-                        confidence_lines.clusters[confidence_lines.cluster_label_set[i]][confidence_lines.cluster_id_set[i]],
-                        SELECTED_CLASSES[confidence_lines.cluster_label_set[i]]
-                    ];
-                }));
+                // on_time_series_cluster_selection_updated(_.map(confidence_lines.cluster_label_set, function (l, i) {
+                //     return [
+                //         confidence_lines.clusters[confidence_lines.cluster_label_set[i]][confidence_lines.cluster_id_set[i]],
+                //         SELECTED_CLASSES[confidence_lines.cluster_label_set[i]]
+                //     ];
+                // }));
 
 
                 var alpha = confidence_lines.cluster_alpha_set[confidence_lines.cluster_alpha_set.length - 1];
@@ -222,12 +244,11 @@ ConfidenceLines.prototype.canvas_mousedown = function (e) {
                 var color = (changeColorLightness(color_manager.get_color(SELECTED_CLASSES[cluster_label]), alpha));
 
 
-                tree_inspector.plot_cluster(confidence_lines.clusters[confidence_lines.cluster_label][confidence_lines.cluster_id], color);
-                tree_inspector.add_cluster(confidence_lines.clusters[confidence_lines.cluster_label][confidence_lines.cluster_id], SELECTED_CLASSES[cluster_label]);
+                // tree_inspector.plot_cluster(confidence_lines.clusters[confidence_lines.cluster_label][confidence_lines.cluster_id], color);
+                // tree_inspector.add_cluster(confidence_lines.clusters[confidence_lines.cluster_label][confidence_lines.cluster_id], SELECTED_CLASSES[cluster_label]);
 
                 feature_matrix.render_feature_ranking_for_clusters();
             }
-            console.log(line);
         }
     }
 

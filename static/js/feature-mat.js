@@ -545,10 +545,21 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters_partially = function
 
         var max_bin = 0;
         var transformed_bin_collec = [];
+        var sum_bin = new Array(cluster_count);
+        for (var j = 0;j < cluster_count; j++) {
+            sum_bin[j] = 0;
+        }
         for (var i = 0; i < that.nBins; i++) {
             transformed_bin_collec[i] = [];
             for (var j = 0; j < cluster_count; j++) {
                 transformed_bin_collec[i][j] = Math.pow(bins_collection[j][feature_id][i], 0.3);
+                sum_bin[j] += transformed_bin_collec[i][j];
+            }
+        }
+        for (var i = 0; i < that.nBins; i++) {
+            for (var j = 0; j < cluster_count; j++) {
+                transformed_bin_collec[i][j] *= 100;
+                transformed_bin_collec[i][j] /= sum_bin[j];
                 max_bin = Math.max(max_bin, transformed_bin_collec[i][j]);
             }
         }
