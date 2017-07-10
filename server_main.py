@@ -21,7 +21,8 @@ from numpy import array
 
 
 @app.route('/api/confusion_matrix', methods=['GET'])
-def get_confusion_matrix():    dataset_identifier = request.args["dataset"]
+def get_confusion_matrix():
+    dataset_identifier = request.args["dataset"]
     type = int(request.args["is_train"])
     dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
     if type:
