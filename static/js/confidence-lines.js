@@ -68,6 +68,8 @@ function ConfidenceLines(container) {
 }
 
 ConfidenceLines.prototype.canvas_mouseout = function () {
+    var that = confidence_lines;
+    that.render_instance_charts(that.focused_class, that.cluster_label, that.cluster_id, that.focused_segment, that.focused_subsegment);
     document.getElementsByTagName("html").item(0).style.cursor = "";
 };
 

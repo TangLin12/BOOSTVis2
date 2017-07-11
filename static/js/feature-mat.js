@@ -183,11 +183,25 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
 
         var transformed_bin_focus = [];
         var transformed_bin_others = [];
+        var sum_bin = [0, 0];
+        var max_bin = 0;
         for (var i = 0; i < that.nBins; i++) {
             transformed_bin_focus[i] = Math.pow(bins_focused_class[feature_id][i], 0.3);
             transformed_bin_others[i] = Math.pow(bins_other_classes[feature_id][i], 0.3);
+
+            sum_bin[0] += transformed_bin_focus[i];
+            sum_bin[1] += transformed_bin_others[i];
         }
-        var max_bin = Math.max(_.max(transformed_bin_focus), _.max(transformed_bin_others));
+        for (var i = 0;i < that.nBins; i++) {
+            transformed_bin_focus[i] *= 100;
+            transformed_bin_others[i] *= 100;
+
+            transformed_bin_focus[i] /= sum_bin[0];
+            transformed_bin_others[i] /= sum_bin[1];
+
+            max_bin = Math.max(max_bin, transformed_bin_focus[i]);
+            max_bin = Math.max(max_bin, transformed_bin_others[i]);
+        }
 
         for (i = 0; i < that.nBins; i++) {
             var focus_bin_height = transformed_bin_focus[i] / max_bin * (ybottom - ytop - 5 * that.scale);
