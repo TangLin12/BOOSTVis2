@@ -55,23 +55,15 @@ def clustering( focused_class, type, dataset_identifier, clustering_all_instance
 
 	#loading data andd true labels
 	if type:
-		posteriorPath = os.path.join( RESULT_ROOT, dataset_identifier, \
-			'posteriors-train-' + str(focused_class) )
-		trueLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, \
-			'training_label')
-		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, \
-			'predicted-label-train')
-		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, \
-			'clustering/train-' + str(focused_class) )
+		posteriorPath = os.path.join( RESULT_ROOT, dataset_identifier, 'posteriors-train-' + str(focused_class) )
+		trueLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'training_label')
+		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-train')
+		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, 'clustering/train-' + str(focused_class) )
 	else:
-		posteriorPath = os.path.join( RESULT_ROOT, dataset_identifier, \
-		 	'posteriors-test-' + str(focused_class) )
-		trueLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, \
-			'testing_label')
-		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, \
-			'predicted-label-test')
-		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, \
-			'clustering/test-' + str(focused_class) )
+		posteriorPath = os.path.join( RESULT_ROOT, dataset_identifier, 'posteriors-test-' + str(focused_class) )
+		trueLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'testing_label')
+		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-test')
+		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, 'clustering/test-' + str(focused_class) )
 	true_labels = loadTrueLabel( trueLabelPath )
 	predicted_label = loadPredictedLabel( predictedLabelPath )
 
@@ -87,7 +79,7 @@ def clustering( focused_class, type, dataset_identifier, clustering_all_instance
 	#perform clustering
 	res = np.array([T],dtype='float32')
 	clusteringKVector = CLUSTERING_K_MATRIX[focused_class]
-	print clusteringKVector
+	print (clusteringKVector)
 	for clustering_class in range(labels_number):
 		clustering_data = data[true_labels==clustering_class,:]
 		clustering_index = np.array(range(data.shape[0]))[true_labels==clustering_class]
@@ -123,7 +115,7 @@ def clustering( focused_class, type, dataset_identifier, clustering_all_instance
 			clustering_labels = kmeans.labels_
 			clustering_size = np.bincount(clustering_labels)
 			res = np.concatenate([res,np.array([clustering_k],dtype='float32'),centroids, clustering_size.astype('float32')])
-	print res.shape
+	print (res.shape)
 	np.array(res,dtype='float32').tofile( outFilePath ) 
 
 def performClustering( dataset_identifier, label_number, clustering_all_instances=False ):
@@ -136,8 +128,5 @@ def performClustering( dataset_identifier, label_number, clustering_all_instance
 
 
 if __name__ == '__main__':
-	# data = loadTrueLabel( os.path.join(RESULT_ROOT, 'lightgbm-otto-8-0.1-800/training_label' ))
-	# print np.unique(data).shape[0]
-	# print(data[-10:])
 	for i in range(9):
 		clustering( i, 1,'lightgbm-otto-8-0.1-800')
