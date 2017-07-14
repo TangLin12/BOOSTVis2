@@ -1,10 +1,13 @@
 from flask import Flask, jsonify
 import numpy as np
 import configparser
-from os import getcwd
+from os import getcwd, makedirs
+
 import json
 from os.path import join, exists
 import math
+
+from scripts import performClustering
 
 HTML_ROOT = getcwd()
 
@@ -95,6 +98,27 @@ def get_posterior_by_class():
         dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "posteriors-test"])
     return send_file(dataset_path + "-" + class_)
 
+#add by Changjian, 2017/7/14
+#load clustering result
+@app.route('/api/clustering-by-class', methods=['GET'])
+def get_clustering_by_class():
+    start = time.time()
+    dataset_identifier = request.args['dataset']
+    type = int( request.args["is_train"])
+    class_ = request.args["class_"]
+    root = join( *[HTML_ROOT, "result", dataset_identifier])
+    if type:
+        dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "clustering","train"])
+    else:
+        dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "clustering","test"])
+    return send_file(dataset_path + "-" + class_)
+
+#add by Changjian, 2017/7/14
+@app.route('/api/perform-clustering-request', methods=['GET'])
+def perform_clustering():
+    dataset_identifier = request.args["dataset"]
+    performClustering(dataset_identifier=dataset_identifier,label_number=9)
+    return jsonify('[test]')
 
 @app.before_request
 def logging():

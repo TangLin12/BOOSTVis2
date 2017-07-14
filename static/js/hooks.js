@@ -78,6 +78,33 @@ var retrieve_posterior = function (class_, callback) {
     }
 };
 
+// add by Changjian , 2017/7/13
+var retrieve_clustering = function( class_, callback){
+    console.log("request clustering", class_);
+    if ( CLUSTERING_ALL[class_]){
+        callback( CLUSTERING_ALL[class_]);
+    }
+    else{
+        var task = '/api/clustering-by-class' + PARAMS + "&class_=" + class_;
+        var oReq = new XMLHttpRequest();
+        oReq.open( "GET", task, true);
+        oReq.responseType = "arraybuffer";
+        oReq.setRequestHeader("cache-control", "no-cache");
+        oReq.onload = function(oEvent){
+            LOADING_STATUS["clustering"] = 1;
+            //TODO:
+            check_loading_status();
+            var arrayBuffer = oReq.response;
+            if( arrayBuffer){
+                var byteArray = new Float32Array(arrayBuffer);
+                CLUSTERING_ALL[class_] = byteArray;
+                callback( POSTERIOR_ALL[class_]);
+            }
+        };
+        oReq.send(null);
+    }
+};
+
 var add_loading_circle = function (container, min_gap) {
     var elem = d3.select(".origin-holder>.preloader-wrapper").node().cloneNode(true);
     var bbox = container.node().getBoundingClientRect();

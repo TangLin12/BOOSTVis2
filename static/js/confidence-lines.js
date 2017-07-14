@@ -342,7 +342,94 @@ ConfidenceLines.prototype.get_predicted_labels = function () {
 };
 
 
+// add by Changjian , 2017/7/13
 ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_class) {
+    var that = this;
+
+    that.cl_canvas.onmousemove = null;
+    if (0) {
+    } else {
+        var loading = add_loading_circle(d3.select("#block-1-4"));
+        retrieve_clustering(focused_class, function () {
+            that.clustering = CLUSTERING_ALL[focused_class];
+            that.clustering_got = true;
+            var T = that.T;
+
+            var index = 1;
+            var cluster_res = [];
+            var clustering_K = [];
+            var cluster_conf_lines = [];
+            var cluster_final_prob = [];
+            var res_index = 0;
+            for( index = 1; index < that.clustering.length; ){
+                //TODO: Changjian, cannot guarantee this work because select classes function is closed now and i cannot test this.
+                if( SELECTED_CLASSES.indexOf(res_index) == -1 ){
+                    var clustering_k = that.clustering[index];
+                    index = index + clustering_k * T + clustering_k;
+                    res_index++;
+                }
+
+                cluster_res[res_index] = {};
+                cluster_conf_lines[res_index] = [];
+                cluster_final_prob[res_index] = [];
+
+                //resolve data from binary file got from beckend
+                var clustering_k = that.clustering[index];
+                index++;
+                var centroids = [];
+                var cluster_size = [];
+                for( var k = 0; k < clustering_k; k++){
+                    centroids[k] = [];
+                    cluster_conf_lines[res_index][k] = [];
+                    for( var i = 0; i < T; i ++ ){
+                        centroids[k][i] = that.clustering[index];
+                        cluster_conf_lines[res_index][k][i] = that.clustering[index];
+                        if( i == T - 1){
+                            cluster_final_prob[res_index][k] = that.clustering[index];
+                        }
+                        index = index + 1;
+                    }
+                }
+                for( var i = 0; i < clustering_k; i++ ){
+                    cluster_size[i] = that.clustering[index];
+                    index++;
+                }
+                cluster_res[res_index]['centroids'] = centroids;
+                cluster_res[res_index]['cluster_size'] = cluster_size;
+                cluster_res[res_index]['inst_cluster'] = [];
+
+                clustering_K[res_index] = clustering_k;
+
+                res_index++;
+            }
+
+            that.clustering_res = cluster_res;
+            that.clustering_K = clustering_K;
+            that.clusters = [];
+            that.cluster_conf_lines = cluster_conf_lines;
+            that.cluster_final_prob = cluster_final_prob;
+
+            that.cluster_label = -1;
+            that.cluster_id = -1;
+            that.cluster_label_set = [];
+            that.cluster_id_set = [];
+            that.focused_segment = 0;
+            that.focused_subsegment = 0;
+
+            //TODO: reset by Changjian
+            EXECUTE_CLASSIFIER_CLUSTERING = false;
+            if (EXECUTE_CLASSIFIER_CLUSTERING == true) {
+                that.perform_advanced_clustering_on_trees(focused_class);
+            }
+
+            that.render_instance_charts(focused_class, that.cluster_label, that.cluster_id, -1, -1);
+            that.cl_canvas.onmousemove = that.canvas_mousemove;
+            remove_loading_circle(d3.select("#block-1-4"));
+        });
+    }
+};
+
+ConfidenceLines.prototype.get_instance_line_chart_one_class_old = function (focused_class) {
     var that = this;
 
     that.cl_canvas.onmousemove = null;
@@ -595,13 +682,15 @@ ConfidenceLines.prototype.perform_clustering_on_instances = function (focused_cl
     that.clusters = clusters;
     that.cluster_conf_lines = cluster_conf_lines;
     that.cluster_final_prob = cluster_final_prob;
-    return {
+    var res = {
         "res": clustering_res,
         "K": clustering_K,
         "clusters": clusters,
         "lines": cluster_conf_lines,
         "prob": cluster_final_prob
     };
+    CONFIDENT_LINES_CLUSTER_RESULT_ALL[focused_class] = res;
+    return res;
 };
 
 ConfidenceLines.prototype.render_line_chart_for_one_instance = function (vector, mousePos) {

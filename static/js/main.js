@@ -125,6 +125,10 @@ var load_data = function (dataset, settype) {
                 INSTANCE_COUNT = TRUE_LABELS.length;
             });
         });
+        //add by Changjian, 2017/7/14
+        d3.json("/api/perform-clustering-request" + params,function(data){
+            null;
+        });
     });
 };
 
