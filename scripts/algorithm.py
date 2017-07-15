@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def time_series_segmentation(confusion_matrics, segment_count):
 	# TODO
 	return []
@@ -11,23 +12,27 @@ def cluster_instance(prediction_scores, k):
 	return {}
 
 
-def get_feature_distribution(feature_values, bin_count):
-	'''This function generates distribution of a given feature,
-	each bin shares a given proportion of instances.
-	Args:
-        feature_values (np.array): 1-d array of feature values.
-        bin_count (int): the number of bins.
-
-    Returns:
-        object: contains attributes:
-            bin: the bin values
-            histogram: the numbers of instance in each bin
-	'''
+def split_feature(feature_values: np.array, bin_count: int) -> np.array:
+	'''This function generates split values of a given feature, given a count of bins.
 	
+	:param feature_values: 1-d array of feature values.
+    :param bin_count: the number of bins.
+    
+    :return: np.array, the bin values
+	'''
 	# TODO
-	return {
-		"bin": [],
-		"histogram": []
-	}
+	bins = []
+	return bins
 
 
+def get_feature_distribution(feature_values: np.array, bins: np.array) -> np.array:
+	'''This function generates distribution of a given feature, the bins are given
+
+	:param feature_values: 1-d array of feature values.
+    :param bins: the bin values.
+
+    :return: np.array, the histogram of each bin
+	'''
+	# TODO
+	histogram = []
+	return histogram
