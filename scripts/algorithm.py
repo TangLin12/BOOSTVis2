@@ -56,8 +56,5 @@ def get_feature_distribution(feature_values: np.array, bins: np.array) -> np.arr
 				r = temp - 1
 			else:
 				l = temp + 1
-	temp_val = 0
-	for i in range(size - 1):
-		if bins[i + 1] != bins[temp_val]:
 
 	return histogram
