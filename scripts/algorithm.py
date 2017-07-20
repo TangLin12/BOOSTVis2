@@ -24,16 +24,48 @@ def split_feature(feature_values: np.array, bin_count: int) -> np.array:
 	:param feature_values: 1-d array of feature values.
     :param bin_count: the number of bins.
     
-    :return: np.array, the bin values
+    :return: dictionary contains np.array, the bin values and bin width
 	'''
 	# TODO
-	bins = []
+	# add by Shouxing, 2017 / 7 / 20
 	feature_values.sort()
 	size = feature_values.size
-	for i in range(bin_count):
-		bins.append(feature_values[int(i * size / bin_count)])
-	bins.append(feature_values[size - 1])
-	return bins
+	count = 0
+	value = [feature_values[0]]
+	width = []
+	for x in feature_values:
+		if x != value[-1]:
+			width.append(count)
+			value.append(x)
+			count = 1
+		else:
+			count += 1
+	if count != 0:
+		width.append(count)
+	value.append((value[-1] - value[0]) / (len(width) - 1) + value[-1])
+	if len(width) <= bin_count:
+		return {
+			'bin_value': value,
+			'bin_width': [round(100 * x / size, 2) for x in width]
+		}
+
+	bin_value = []
+	bin_width = []
+	step = int(size / bin_count)
+	i = 0
+	while i < size:
+		bin_value.append(feature_values[i])
+		j = min(step, size - i)
+		val = feature_values[i + j - 1]
+		while i + j < size and feature_values[i + j] == val:
+			j += 1
+		bin_width.append(j)
+		i += j
+	bin_value.append((bin_value[-1] - bin_value[0]) / (len(bin_width) - 1) + feature_values[-1])
+	return {
+		'bin_value': bin_value,
+		'bin_width': [round(100 * x / size, 2) for x in bin_width]
+	}
 
 
 def get_feature_distribution(feature_values: np.array, bins: np.array) -> np.array:
@@ -45,14 +77,12 @@ def get_feature_distribution(feature_values: np.array, bins: np.array) -> np.arr
     :return: np.array, the histogram of each bin
 	'''
 	# TODO
+	# add by Shouxing, 2017 / 7 / 20
 	size = bins.size
 	histogram = [0] * (size - 1)
 	for x in feature_values:
-		if x == bins[size - 1]:
-			histogram[size - 2] += 1
-			break
 		l = 0
-		r = size - 1
+		r = size - 2
 		while l <= r:
 			temp = int((l + r) / 2)
 			if bins[temp] <= x < bins[temp + 1]:
