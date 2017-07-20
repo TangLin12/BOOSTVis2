@@ -1,9 +1,7 @@
 import lightgbm as lgb
 from os.path import join
-from os import getcwd
 from ..scripts import processor
 from tests import datasets
-CWD = getcwd()
 
 def LightGBMTest():
     dataset = datasets.load_toy1()
@@ -33,11 +31,10 @@ def LightGBMTest():
                 valid_sets=[lgb_valid],  # eval training data
                 feature_name=feature_name,
                 categorical_feature=[21])
-    # booster = lgb.Booster(model_file=join(CWD, 'model'))
-    l = processor.LightGBMProcess(booster, dataset["train"], {
+    p = processor.LightGBMProcess(booster, dataset["train"], {
         "valid_1": dataset["valid"]
-    }, params, join("..", "result", "result-test-0720"))
-    l.process()
+    }, params, join("..", "result", "result-test"))
+    p.process()
 
 
 if __name__ == '__main__':
