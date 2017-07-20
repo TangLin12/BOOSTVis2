@@ -362,7 +362,7 @@ ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_
             var cluster_final_prob = [];
             var res_index = 0;
             for( index = 1; index < that.clustering.length; ){
-                //TODO: Changjian, cannot guarantee this work because select classes function is closed now and i cannot test this.
+                //TODO: Changjian, cannot guarantee this work because select classes function is closed now and i cannot tests this.
                 if( SELECTED_CLASSES.indexOf(res_index) == -1 ){
                     var clustering_k = that.clustering[index];
                     index = index + clustering_k * T + clustering_k;

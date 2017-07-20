@@ -2,10 +2,7 @@ from flask import Flask, jsonify
 import numpy as np
 import configparser
 from os import getcwd
-
-import json
 from os.path import join
-import math
 
 from scripts.clustering import performClustering
 
@@ -82,7 +79,7 @@ def get_predicted_label():
 	dataset_identifier = request.args["dataset"]
 	type = int(request.args["is_train"])
 	root = join(*[HTML_ROOT, "result", dataset_identifier])
-	l = np.loadtxt(join(root, "predicted-label-" + ("train" if type else "test")), dtype=np.int16)
+	l = np.loadtxt(join(root, "predicted-label-" + ("train" if type else "tests")), dtype=np.int16)
 	return jsonify(l.tolist())
 
 
@@ -96,7 +93,7 @@ def get_posterior_by_class():
 	if type:
 		dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "posteriors-train"])
 	else:
-		dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "posteriors-test"])
+		dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "posteriors-tests"])
 	return send_file(dataset_path + "-" + class_)
 
 
@@ -112,7 +109,7 @@ def get_clustering_by_class():
 	if type:
 		dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "clustering", "train"])
 	else:
-		dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "clustering", "test"])
+		dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "clustering", "tests"])
 	return send_file(dataset_path + "-" + class_)
 
 
@@ -121,7 +118,7 @@ def get_clustering_by_class():
 def perform_clustering():
 	dataset_identifier = request.args["dataset"]
 	performClustering(dataset_identifier=dataset_identifier, label_number=9)
-	return jsonify('[test]')
+	return jsonify('[tests]')
 
 
 @app.before_request
