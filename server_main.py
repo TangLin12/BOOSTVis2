@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 import numpy as np
 import configparser
+from scripts.algorithm import *
 from os import getcwd, makedirs
 
 import json
@@ -9,7 +10,7 @@ import math
 
 import gc
 
-from scripts import performClustering
+from scripts.clustering import performClustering
 
 HTML_ROOT = getcwd()
 
@@ -36,6 +37,72 @@ def get_confusion_matrix():
     else:
         confusion_matrix = np.load(join(dataset_path, "confusion_matrix_test.npy"))
     return jsonify(confusion_matrix.tolist())
+
+# add by Shouxing, 2017 / 7 / 20
+@app.route('/api/feature_matrix_for_cluster')
+def get_feature_matrix():
+    cluster_ids = json.loads(request.args.get('cluster_ids'))
+    cluster_classes = json.loads(request.args.get('cluster_classes'))
+    features = json.loads(request.args.get('features'))
+    # TODO get matrix of instances and features: feature_raw
+    feature_raw = np.array([[0]])
+    size = len(cluster_ids)
+    # TODO get the directory path
+    features_split_values = np.load('features_split_values.npy')
+    features_split_widths = np.load('features_split_widths.npy')
+
+    feature_matrix = []
+    for feature_id in features:
+        row = []
+        for i in range(size):
+            instance_ids = []  # get by cluster_ids[i] and cluster_classes[i]
+            # TODO get instance ids for a tuple (cluster_id, cluster_class):
+            bins = features_split_values[feature_id]
+            feature_values = [feature_raw[instance_id][feature_id] for instance_id in instance_ids]
+            distribution = get_feature_distribution(feature_values, bins)
+            row.append(distribution)
+        feature_matrix.append(row)
+    return jsonify({
+        'feature_matrix': feature_matrix,
+        'feature_widths': features_split_widths.tolist()
+    })
+
+# add by Shouxing, 2017 / 7 / 20
+@app.route('/api/feature_matrix_for_class')
+def get_feature_matrix():
+    class_id = json.loads(request.args.get('class_id'))
+    features = json.loads(request.args.get('features'))
+    # TODO get matrix of instances and features: feature_raw
+    feature_raw = np.array([[0]])
+    # TODO get labels of instances: instance_labels
+    feature_raw = np.array([[0]])
+    instance_labels = np.array([0])
+    # TODO get the directory path
+    features_split_values = np.load('features_split_values.npy')
+    features_split_widths = np.load('features_split_widths.npy')
+    size = len(instance_labels)
+    class_instance_ids = [[],[]]
+    for i in range(size):
+        if instance_labels[i] == class_id:
+            class_instance_ids[0].append(i)
+        else:
+            class_instance_ids[1].append(i)
+
+    feature_matrix = []
+    for feature_id in features:
+        row = []
+        for i in range(2):
+            instance_ids = class_instance_ids[i]
+            bins = features_split_values[feature_id]
+            feature_values = [feature_raw[instance_id][feature_id] for instance_id in instance_ids]
+            distribution = get_feature_distribution(feature_values, bins)
+            row.append(distribution)
+        feature_matrix.append(row)
+    return jsonify({
+        'feature_matrix': feature_matrix,
+        'feature_widths': features_split_widths.tolist()
+    })
+
 
 
 @app.route('/api/feature-importance-tree-size', methods=['GET'])

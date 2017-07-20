@@ -64,6 +64,28 @@ class AbstractProcessor(object):
         # TODO
         pass
 
+    # add by Shouxing, 2017 / 7 / 20
+    def pre_split_features(self, feature_raw: np.array, bin_count: int):
+        '''This function generates split values of all features, given a count of bins.
+
+        :param feature_raw: n-d array of feature values, n is number of instances and d is number of features.
+        :param bin_count: the expect number of bins.
+
+        :return: none
+        '''
+        bin_values = []
+        bin_widths = []
+        data = np.transpose(feature_raw)
+        for x in data:
+            dic = algorithm.split_feature(x, bin_count)
+            bin_values.append(dic['bin_value'])
+            bin_widths.append(dic['bin_width'])
+        np.save('features_split_values', np.array(bin_values))
+        np.save('features_split_widths', np.array(bin_widths))
+        # TODO to get the directory path
+
+
+
     def process_dataset(self, dataset):
         prediction_score = np.zeros((self.data_count, self.class_count))
         confusion_matrices = []
