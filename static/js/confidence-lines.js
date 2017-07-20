@@ -405,6 +405,7 @@ ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_
 
             that.clustering_res = cluster_res;
             that.clustering_K = clustering_K;
+            // TODO :
             that.clusters = [];
             that.cluster_conf_lines = cluster_conf_lines;
             that.cluster_final_prob = cluster_final_prob;
@@ -416,8 +417,6 @@ ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_
             that.focused_segment = 0;
             that.focused_subsegment = 0;
 
-            //TODO: reset by Changjian
-            EXECUTE_CLASSIFIER_CLUSTERING = false;
             if (EXECUTE_CLASSIFIER_CLUSTERING == true) {
                 that.perform_advanced_clustering_on_trees(focused_class);
             }
@@ -1415,7 +1414,64 @@ function calculate_instance_count_on_nodes(iteration, class_label, inst_idx) {
     };
 }
 
+function calculate_instance_count_on_nodes2(iteration, class_label, inst_idx) {
+    //d3.text("/api/model-raw-iteration" + PARAMS + "&iteration=" + iteration, function (data) {
 
+    var tree_info = ALL_TREES[iteration * CLASS_COUNT + class_label];
+
+    if (tree_info == undefined) {
+        console.log("ddd");
+    }
+
+    var inst_count_on_leaves = [],
+        inst_count_on_internals = [];
+
+    for (i = 0; i < tree_info['num_leaves'] + 1; i++) {
+        inst_count_on_leaves[i] = 0;
+    }
+
+    for (i = 0; i < tree_info['num_internals']; i++) {
+        inst_count_on_internals[i] = 0;
+    }
+
+    for (var i = 0; i < inst_idx.length; i++) {
+        var feature_vector = RAW_FEATURES[inst_idx[i]];
+        var node_id = 0;
+
+        while (true) {
+            inst_count_on_internals[node_id]++;
+
+            if (tree_info["split_feature"] == undefined) {
+                console.log("ddd");
+            }
+            var split_feature = tree_info['split_feature'][node_id];
+            var threshold = tree_info['threshold'][node_id];
+
+            if (feature_vector[split_feature] < threshold) {
+                node_id = tree_info['left_child'][node_id];
+            } else {
+                node_id = tree_info['right_child'][node_id];
+            }
+
+            if (node_id < 0) {
+                break;
+            }
+        }
+
+        inst_count_on_leaves[-node_id]++;
+    }
+
+    return {
+        'inst_count_on_leaves' : inst_count_on_leaves,
+        'inst_count_on_internals' : inst_count_on_internals
+    };
+
+    //return {
+    //    'inst_count_on_leaves' : inst_count_on_leaves,
+    //    'inst_count_on_internals' : inst_count_on_internals
+    //};
+    //});
+}
 
 ConfidenceLines.prototype.perform_clustering_on_trees = function (focused_class) {
 
