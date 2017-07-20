@@ -63,68 +63,37 @@ class AbstractProcessor(ABC):
         decision = helper.prob2decision(prediction_scores)
         return confusion_matrix(true_label, decision)
 
-    def instance_clustering(self, set_name, timepoints, set, decision):
-        y = set["y"]
-        X = set["X"]
-        data_count = X.shape[0]
-        scores = np.zeros(shape=(len(timepoints), data_count, self.class_count))
+    # add by Shouxing, 2017 / 7 / 20
+    def pre_split_features(self, feature_raw: np.array, bin_count: int):
+        '''This function generates split values of all features, given a count of bins.
+
+        :param feature_raw: n-d array of feature values, n is number of instances and d is number of features.
+        :param bin_count: the expect number of bins.
+
+        :return: none
+        '''
+        bin_values = []
+        bin_widths = []
+        data = np.transpose(feature_raw)
+        for x in data:
+            dic = algorithm.split_feature(x, bin_count)
+            bin_values.append(dic['bin_value'])
+            bin_widths.append(dic['bin_width'])
+        np.save(join(self.data_root, 'features_split_values'), np.array(bin_values))
+        np.save(join(self.data_root, 'features_split_widths'), np.array(bin_widths))
+
+    def get_prediction_score(self, set_name, data_count, class_count, timepoints):
+        scores = np.zeros(shape=(len(timepoints), data_count, class_count))
         for i, t in enumerate(timepoints):
             scores[i] = np.load(join(self.data_root, set_name + "-prediction-score", "iteration-" + str(t) + ".npy"))
         print(scores.shape)
-        scores = np.swapaxes(scores, 1, 0)
-        # scores_flatten = scores.reshape(data_count, -1)
-        clustering_result = {}
-        for i in range(self.class_count):
-            res = []
-            K = []
-            clusters = []
-            lines = []
-            prob = []
-            for j in range(self.class_count):
-                instance_index_j = []
-                for index in range(data_count):
-                    if y[index] == j and decision[index] == i:
-                        instance_index_j.append(index)
-                k = 5
-
-                if len(instance_index_j) < 50:
-                    k = 1
-
-                centroids, labels, cluster_size = clustering.kmeans_clustering(scores[instance_index_j, :, i], k)
-                res.append({
-                    "centroids": centroids,
-                    "cluster_size": cluster_size,
-                    "inst_cluster": labels
-                })
-                K.append(k)
-
-                # TODO: clusters, lines, prob
-                clusters_by_class = []
-                line_by_class = []
-                prob_by_class = []
-                for c in range(len(centroids)):
-                    cluster_instance_index = np.array(instance_index_j)[np.array(labels) == c]
-                    clusters_by_class.append(cluster_instance_index.tolist())
-                    line_by_class = np.mean(scores[cluster_instance_index][:, :, i], axis=0)
-                    prob_by_class.append(line_by_class[-1])
-                clusters.append(clusters_by_class)
-                lines.append(line_by_class.tolist())
-                prob.append(prob_by_class)
-
-            clustering_result[i] = {
-                "res": res,
-                "K": K,
-                "clusters": clusters,
-                "lines": lines,
-                "prob": prob
-            }
-
-        helper.save_json(clustering_result, join(self.data_root, "clustering_result_" + set_name + ".json"))
+        return np.swapaxes(scores, 1, 0)
 
     def process_dataset(self, set, set_name):
         set_root = join(self.data_root, set_name + "-prediction-score")
         helper.create_folder(set_root)
-        prediction_score = np.zeros((set["X"].shape[0], self.class_count))
+        data_count = set["X"].shape[0]
+        prediction_score = np.zeros((data_count, self.class_count))
         confusion_matrices = []
         for i in range(self.iteration_count):
             prediction_score = self.predict(set["X"], i)
@@ -133,7 +102,16 @@ class AbstractProcessor(ABC):
             confusion_matrices.append(confusion_matrix)
 
         key_timepoints = algorithm.time_series_segmentation(confusion_matrices, config.SEGMENT_COUNT)
-        self.instance_clustering(set_name, key_timepoints, set, helper.prob2decision(prediction_score))
+        scores = self.get_prediction_score(set_name, data_count, self.class_count, key_timepoints)
+        decision_last_iteration = helper.prob2decision(prediction_score)
+        cluster_result = clustering.instance_clustering(
+            self.class_count,
+            scores,
+            set,
+            decision_last_iteration
+        )
+        helper.save_json(cluster_result, join(self.data_root, "clustering_result_" + set_name + ".json"))
+        self.pre_split_features(set["X"], config.FEATURE_BIN_COUNT)
         return confusion_matrices, key_timepoints
 
     def process(self):
