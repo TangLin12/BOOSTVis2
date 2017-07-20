@@ -26,7 +26,7 @@
 #self-column-2 {
     width: 43%;
     opacity: 0;
-    display: none;
+    /*display: none;*/
 }
 
 #self-column-3 {

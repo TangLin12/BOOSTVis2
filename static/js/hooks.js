@@ -2,10 +2,38 @@
  * Created by Derek Xiao on 2017/2/8.
  */
 
+var on_timepoint_highlight = function (p) {
+    $("#iteration-indicator").text(p);
+    navigation.on_instance_timepoint_highlight(p);
+};
+
+var show_tree_classifier = function (iteration, class_) {
+    class_ = class_ || confidence_lines.focused_class;
+    iteration = Math.max(iteration, 0);
+    iteration = Math.min(iteration, ITERATION_COUNT - 1);
+    tree_inspector.draw_tree(iteration, class_);
+    tree_list_highlight(iteration, class_);
+    //  edit by Changjian, 17/7/18
+    // it concerns navigation which is not involved in  this edition.
+    // on_timepoint_highlight(iteration);
+};
+
 var recluster_tree_classifier = function (number) {
     console.log("recluster", number);
     CLASSIFIER_CLUSTER_NUMBER = number;
     confidence_lines.perform_advanced_clustering_on_trees(confusion_matrix.reverse_ranking[confidence_lines.focused_class]);
+};
+
+// add by Changjian, this funcion
+var clear_tree_view_header_indicator = function () {
+    $("#tree-iteration-indicator").val("-1");
+    $("#tree-class-indicator").text("-");
+};
+
+var update_tree_view_header_indicator = function (iteration, class_) {
+    $("#tree-iteration-indicator").val((iteration - - 1));
+    $("#tree-class-indicator").text("C" + (class_ - - 1))
+        .css("color", "grey");
 };
 
 var is_instance_mode = function () {
@@ -17,7 +45,13 @@ var get_current_focused_class = function () {
     return confidence_lines.focused_class;
 };
 
+var tree_list_highlight = function (tree_index, class_) {
+    tree_list.highlight_representative_tree(tree_index, class_);
+};
+
 var focus_on_class = function (focused_class) {
+    // add by Changjian, 2017/7/18
+    tree_list.show_tree_list(focused_class);
     class_selector.highlight_class(confusion_matrix.reverse_ranking[focused_class]);
 };
 
@@ -48,6 +82,10 @@ var click_class = function (label) {
     confidence_lines.get_instance_line_chart(label);
     feature_matrix.render_feature_ranking();
     //tree_list_update(SELECTED_CLASSES[i]);
+
+    // add by Changjian,
+    treesize_barchart.render_tree_size_bar_chart(label);
+    tree_inspector.clear_clusters();
     switch_to_confidence_lines();
 };
 

@@ -114,7 +114,10 @@ def clustering( focused_class, type, dataset_identifier, clustering_all_instance
 			centroids = kmeans.cluster_centers_.reshape(-1).astype('float32')
 			clustering_labels = kmeans.labels_
 			clustering_size = np.bincount(clustering_labels)
-			res = np.concatenate([res,np.array([clustering_k],dtype='float32'),centroids, clustering_size.astype('float32')])
+			#print clustering_labels
+			dic_index = { clustering_index[i] : v for i, v in enumerate(clustering_labels)}
+			clustering_sorted_index = np.array(sorted( clustering_index, key=lambda x : dic_index[x] )).reshape(-1).astype('float32')
+			res = np.concatenate([res,np.array([clustering_k],dtype='float32'),centroids, clustering_size.astype('float32'), clustering_sorted_index])
 	print (res.shape)
 	np.array(res,dtype='float32').tofile( outFilePath ) 
 

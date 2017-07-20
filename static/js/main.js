@@ -5,7 +5,7 @@
 var preloader = new PreLoader();
 
 // vis components
-var class_selector, feature_matrix, confusion_matrix, confidence_lines;
+var class_selector, feature_matrix, confusion_matrix, confidence_lines,tree_inspector, tree_list, treesize_barchart ;
 
 var clear_globals = function () {
     TREE_INFO_LIGHTGBM = [];
@@ -78,6 +78,10 @@ var load_data = function (dataset, settype) {
         feature_matrix = new FeatureMatrix(d3.select("#feature-mat"));
         confusion_matrix = new FlowingConfusionMatrix(d3.select("#conf-mat"));
         confidence_lines = new ConfidenceLines(d3.select("#confidence-lines"));
+        //add by Changjian, tree view
+        tree_inspector = new TreeInspector_svg(d3.select("#tree-inspector"));
+        tree_list = new TreeList(d3.select("#representative-trees"));
+        treesize_barchart = new TreesizeBarchart(d3.select("#tree-size-barchart"));
 
         d3.json("/api/confusion_matrix" + params)
             .get(function (error, data) {
@@ -125,6 +129,31 @@ var load_data = function (dataset, settype) {
                 INSTANCE_COUNT = TRUE_LABELS.length;
             });
         });
+
+        // add by Changjian, 2017/7/18
+        // loading classifier clustering results
+        d3.json("/api/classifier-clustering-result" + PARAMS)
+            .get(function (error, data) {
+                //console.log(error, data);
+                if (data) {
+                    //CLASSIFIER_CLUSTERING_RES_ALL = [];
+                    CLASSIFIER_CLUSTER_NUMBER = data[0]["cluster_size"].length;
+                    for (var i = 0; i < CLASS_COUNT; i ++) {
+                        CLASSIFIER_CLUSTERING_RES_ALL[i] = {};
+                        CLASSIFIER_CLUSTERING_RES_ALL[i][CLASSIFIER_CLUSTER_NUMBER] = data[i];
+                    }
+                } else {
+                    CLASSIFIER_CLUSTER_NUMBER = 5;
+                }
+                preloader.load_representative_trees(function () {
+
+                    //preloader.load_instance_timepoint(ENDPOINTS, navigation);
+                });
+                //request_binary("/api/classifier-distance" + PARAMS, function (data1) {
+                //    CLASSIFIER_DISTANCE_ALL = data1;
+                //});
+            });
+
         //add by Changjian, 2017/7/14
         d3.json("/api/perform-clustering-request" + params,function(data){
             null;
