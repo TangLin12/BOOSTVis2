@@ -358,6 +358,7 @@ ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_
             var index = 1;
             var cluster_res = [];
             var clustering_K = [];
+            var cluster = [];
             var cluster_conf_lines = [];
             var cluster_final_prob = [];
             var res_index = 0;
@@ -370,6 +371,7 @@ ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_
                 }
 
                 cluster_res[res_index] = {};
+                cluster[res_index] = [];
                 cluster_conf_lines[res_index] = [];
                 cluster_final_prob[res_index] = [];
 
@@ -394,6 +396,16 @@ ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_
                     cluster_size[i] = that.clustering[index];
                     index++;
                 }
+
+                // add by Changjian, 2017/7/20
+                for( var i = 0; i < clustering_k; i++ ){
+                    cluster[res_index][i] = [];
+                    for( var j = 0; j < cluster_size[i]; j++ ){
+                        cluster[res_index][i][j] = that.clustering[index];
+                        index++;
+                    }
+                }
+
                 cluster_res[res_index]['centroids'] = centroids;
                 cluster_res[res_index]['cluster_size'] = cluster_size;
                 cluster_res[res_index]['inst_cluster'] = [];
@@ -406,7 +418,7 @@ ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_
             that.clustering_res = cluster_res;
             that.clustering_K = clustering_K;
             // TODO :
-            that.clusters = [];
+            that.clusters = cluster;
             that.cluster_conf_lines = cluster_conf_lines;
             that.cluster_final_prob = cluster_final_prob;
 

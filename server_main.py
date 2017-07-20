@@ -7,6 +7,8 @@ import json
 from os.path import join, exists
 import math
 
+import gc
+
 from scripts import performClustering
 
 HTML_ROOT = getcwd()
@@ -16,6 +18,7 @@ app = Flask(__name__, static_url_path="/static")
 POSTERIOR_SPLIT_SIZE = 10
 from flask import after_this_request, request
 
+TREE_ALL_DATA = {}
 from time import gmtime, strftime
 
 
@@ -119,6 +122,114 @@ def perform_clustering():
     dataset_identifier = request.args["dataset"]
     performClustering(dataset_identifier=dataset_identifier,label_number=9)
     return jsonify('[test]')
+
+#add by Changjian, 2017/7/18
+#for tree view
+@app.route('/api/get-classifier-index', methods=['GET'])
+def get_classifier():
+    # app.logger.info(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+    dataset_identifier = request.args["dataset"]
+    index = int(request.args["index"])
+    # dataset_path = join(*[HTML_ROOT, "..", "result", dataset_identifier])
+    # with open(join(dataset_path, "tree-shortened.json")) as json_file:
+    #     all = json.loads(json_file.read())
+    global TREE_ALL_DATA
+    if dataset_identifier not in TREE_ALL_DATA:
+        TREE_ALL_DATA = {}
+        dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+        print(dataset_path)
+        with open(join(dataset_path, "tree-shortened.json")) as json_file:
+            TREE_ALL_DATA[dataset_identifier] = json.loads(json_file.read())
+    all = TREE_ALL_DATA[dataset_identifier]
+    return jsonify({
+        "index": index,
+        "tree": all[index]
+    })
+
+#add by Changjian, 2017/7/18
+# for tree view
+@app.route('/api/model-raw-index', methods=['GET'])
+# @gzipped
+def get_raw_model_iteration():
+    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+    dataset_identifier = request.args["dataset"]
+    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+    iteration = int(request.args["index"])
+    with open(join(dataset_path, "model")) as model_file:
+        in_block = False
+        result = []
+        for line in model_file:
+            if line.startswith("Tree=" + str(iteration)):
+                in_block = True
+            if line.startswith("Tree=" + str(iteration + 1)):
+                break
+            if in_block:
+                result.append(line)
+        return "".join(result)
+
+# add by Changjian, 2017/7/18
+@app.route("/api/classifier-clustering-result", methods=['GET'])
+def get_classifier_clustering_result():
+    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+    dataset_identifier = request.args["dataset"]
+    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+    if not exists(join(dataset_path, "cluster_result_all.json")):
+        return ""
+    with open(join(dataset_path, "cluster_result_all.json")) as result_file:
+        return result_file.read()
+
+# add by Changjian, 2017/7/18
+@app.route('/api/get-classifiers-set', methods=['GET'])
+def get_classifier_set():
+    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+    dataset_identifier = request.args["dataset"]
+    # index = int(request.args["index"])
+    index = [int(e) for e in request.args["index"].split("-")]
+    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+    # with open(join(dataset_path, "tree-shortened.json")) as json_file:
+    #     all = json.loads(json_file.read())
+    global TREE_ALL_DATA
+    if dataset_identifier not in TREE_ALL_DATA:
+        TREE_ALL_DATA = {}
+        for key in TREE_ALL_DATA:
+            del TREE_ALL_DATA[key]
+        gc.collect()
+        dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+        with open(join(dataset_path, "tree-shortened.json")) as json_file:
+            TREE_ALL_DATA[dataset_identifier] = json.loads(json_file.read())
+        print(dataset_identifier, "tree loaded")
+    all = TREE_ALL_DATA[dataset_identifier]
+    trees = []
+    for i in index:
+        trees.append(all[i])
+    return jsonify({
+        "index": index,
+        "trees": trees
+    })
+
+
+# add by Changjian, 2017/7/18
+@app.route('/api/model-raw-indices', methods=['GET'])
+def get_raw_model_iterations():
+    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+    dataset_identifier = request.args["dataset"]
+    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+    iterations = [int(e) for e in request.args["index"].split("-")]
+    with open(join(dataset_path, "model")) as model_file:
+        lines = model_file.readlines()
+        results = []
+        for iteration in iterations:
+            in_block = False
+            result = []
+            for line in lines:
+                if line.startswith("Tree=" + str(iteration)):
+                    in_block = True
+                if line.startswith("Tree=" + str(iteration + 1)):
+                    break
+                if in_block:
+                    result.append(line)
+            results.append("".join(result))
+        return "|".join(results)
 
 @app.before_request
 def logging():

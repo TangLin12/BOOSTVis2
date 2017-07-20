@@ -278,7 +278,7 @@ TreeList.prototype.show_tree_list = function (class_) {
                 .attr("font-family", "sans-serif")
                 .attr("font-size", 11 + "px");
             o_svg.append("text")
-                .text("count: " + tree_counts[i])
+                .text("count: " + tree_counts[ tree_list_index])
                 .attr("fill", "grey")
                 .attr("x", 1 - padding_left)
                 .attr("y", 25)
