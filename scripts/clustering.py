@@ -36,7 +36,7 @@ def loadPredictedLabel( filename ):
 	return np.array(s) 
 
 def loadTrueLabel( filename ):
-	fi = open( filename, 'r' )
+	fi = open( filename, 'r')
 	s = fi.read().split('\n')
 	s = [ int(i) for i in s]
 	return np.array(s)
