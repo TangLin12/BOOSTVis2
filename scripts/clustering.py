@@ -66,10 +66,20 @@ def instance_clustering(class_count, scores, set, decision):
 			for index in range(data_count):
 				if y[index] == j and decision[index] == i:
 					instance_index_j.append(index)
+
 			k = 5
-			if len(instance_index_j) < 50:
+			if len(instance_index_j) == 0:
+				k = 0
+			elif len(instance_index_j) <= 50:
 				k = 1
-			centroids, labels, cluster_size = kmeans_clustering(scores[instance_index_j, :, i], k)
+			centroids = []
+			labels = []
+			cluster_size = []
+			if k != 0:
+				if len(instance_index_j) == 0:
+					print("")
+				centroids, labels, cluster_size = kmeans_clustering(scores[instance_index_j, :, i], k)
+
 			res.append({
 				"centroids": centroids,
 				"cluster_size": cluster_size,
@@ -77,7 +87,7 @@ def instance_clustering(class_count, scores, set, decision):
 			})
 			K.append(k)
 			clusters_by_class = []
-			line_by_class = []
+			line_by_class = np.array([])
 			prob_by_class = []
 			for c in range(len(centroids)):
 				cluster_instance_index = np.array(instance_index_j)[np.array(labels) == c]
@@ -96,6 +106,7 @@ def instance_clustering(class_count, scores, set, decision):
 			"prob": prob
 		}
 	return clustering_result
+
 
 def clustering( focused_class, type, dataset_identifier, clustering_all_instances=False):
 	'''

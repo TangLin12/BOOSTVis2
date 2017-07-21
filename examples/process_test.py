@@ -43,7 +43,7 @@ def LightGBMTest():
 		'bagging_fraction': 0.8,
 		'bagging_freq': 5,
 		'verbose': 0,
-		'num_boost_round': 10,
+		'num_boost_round': 100,
 		'num_class': 5
 	}
 
