@@ -66,10 +66,20 @@ def instance_clustering(class_count, scores, set, decision):
 			for index in range(data_count):
 				if y[index] == j and decision[index] == i:
 					instance_index_j.append(index)
+
 			k = 5
-			if len(instance_index_j) < 50:
+			if len(instance_index_j) == 0:
+				k = 0
+			elif len(instance_index_j) <= 50:
 				k = 1
-			centroids, labels, cluster_size = kmeans_clustering(scores[instance_index_j, :, i], k)
+			centroids = np.array([])
+			labels = np.array([])
+			cluster_size = np.array([])
+			if k != 0:
+				if len(instance_index_j) == 0:
+					print("")
+				centroids, labels, cluster_size = kmeans_clustering(scores[instance_index_j, :, i], k)
+
 			res.append({
 				"centroids": centroids,
 				"cluster_size": cluster_size,
@@ -77,7 +87,7 @@ def instance_clustering(class_count, scores, set, decision):
 			})
 			K.append(k)
 			clusters_by_class = []
-			line_by_class = []
+			line_by_class = np.array([])
 			prob_by_class = []
 			for c in range(len(centroids)):
 				cluster_instance_index = np.array(instance_index_j)[np.array(labels) == c]
@@ -116,9 +126,9 @@ def clustering( focused_class, type, dataset_identifier, clustering_all_instance
 		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-train')
 		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, 'clustering/train-' + str(focused_class) )
 	else:
-		posteriorPath = os.path.join( RESULT_ROOT, dataset_identifier, 'posteriors-tests-' + str(focused_class) )
+		posteriorPath = os.path.join( RESULT_ROOT, dataset_identifier, 'posteriors-test-' + str(focused_class) )
 		trueLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'testing_label')
-		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-tests')
+		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-test')
 		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, 'clustering/tests-' + str(focused_class) )
 	true_labels = loadTrueLabel( trueLabelPath )
 	predicted_label = loadPredictedLabel( predictedLabelPath )
