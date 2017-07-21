@@ -75,7 +75,7 @@ var IMPORTANCE_TYPE = INFORMATION_GAIN;
 var ISDEBUG = true;
 
 var STOP_METRICS = [
-    //"accuracy-test",
+    //"accuracy-tests",
     //"accuracy-train",
     //"margin_mean_test",
     //"margin_mean_train",

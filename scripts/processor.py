@@ -1,17 +1,20 @@
-import lightgbm as lgb
 import numpy as np
-from . import algorithm
-from . import config
-from . import datasets
+from os.path import join
+from scripts import algorithm
+from scripts import config
 
-from os import makedirs
-from os.path import exists, join
+from sklearn.metrics import confusion_matrix
+from scripts import helper
+from scripts import clustering
 
-class AbstractProcessor(object):
+from abc import ABC
+
+class AbstractProcessor(ABC):
     model = None
     train_set = None
     valid_sets = None
     params = {}
+    data_root = ""
 
     # meta data
     class_count = 0
@@ -28,11 +31,12 @@ class AbstractProcessor(object):
     train_accuracy_list = []
     valids_accuracy_list = {}
 
-    def __init__(self, m, train, valids, params):
+    def __init__(self, m, train, valids, params, data_root):
         self.model = m
         self.train_set = train
         self.valid_sets = valids
         self.params = params
+        self.data_root = data_root
 
     def get_manifest(self):
         return {
@@ -42,27 +46,22 @@ class AbstractProcessor(object):
             "class_label": self.class_label,
             "feature_count": self.feature_count,
             "endpoints_train": self.endpoints_train,
-            "endpoints_valids": self.endpoints_valids
+            "endpoints_valids": self.endpoints_valids,
+            "set_names": ["train"] + list(self.valid_sets.keys())
         }
 
-    def _create_folder(self, d):
-        if not exists(d):
-            makedirs(d)
-        pass
-
-    # return prediction scores
     def predict_one_iteration(self, data, num_iteration):
-        # TODO
-        pass
+        # leave for child class
+        return []
 
     def predict(self, data, num_iteration):
-        # TODO
-        print("abstract predict")
-        pass
+        # leave for child class
+        return []
 
-    def get_confusion_matrix(self, prediction_scores):
-        # TODO
-        pass
+    def get_confusion_matrix(self, prediction_scores, true_label):
+        # decision = np.argmax(prediction_scores, axis=1)
+        decision = helper.prob2decision(prediction_scores)
+        return confusion_matrix(true_label, decision)
 
     # add by Shouxing, 2017 / 7 / 20
     def pre_split_features(self, feature_raw: np.array, bin_count: int):
@@ -80,52 +79,80 @@ class AbstractProcessor(object):
             dic = algorithm.split_feature(x, bin_count)
             bin_values.append(dic['bin_value'])
             bin_widths.append(dic['bin_width'])
-        np.save('features_split_values', np.array(bin_values))
-        np.save('features_split_widths', np.array(bin_widths))
-        # TODO to get the directory path
+        np.save(join(self.data_root, 'features_split_values'), np.array(bin_values))
+        np.save(join(self.data_root, 'features_split_widths'), np.array(bin_widths))
 
+    def get_prediction_score(self, set_name, data_count, class_count, timepoints):
+        scores = np.zeros(shape=(len(timepoints), data_count, class_count))
+        for i, t in enumerate(timepoints):
+            scores[i] = np.load(join(self.data_root, set_name + "-prediction-score", "iteration-" + str(t) + ".npy"))
+        print(scores.shape)
+        return np.swapaxes(scores, 1, 0)
 
-
-    def process_dataset(self, dataset):
-        prediction_score = np.zeros((self.data_count, self.class_count))
+    def process_dataset(self, set, set_name):
+        set_root = join(self.data_root, set_name + "-prediction-score")
+        helper.create_folder(set_root)
+        data_count = set["X"].shape[0]
+        prediction_score = np.zeros((data_count, self.class_count))
         confusion_matrices = []
         for i in range(self.iteration_count):
-            prediction_score = self.predict(dataset, i)
-            confusion_matrix = self.get_confusion_matrix(prediction_score)
+            prediction_score = self.predict(set["X"], i)
+            np.save(join(set_root, "iteration-" + str(i) + ".npy"), prediction_score)
+            confusion_matrix = self.get_confusion_matrix(prediction_score, set["y"])
             confusion_matrices.append(confusion_matrix)
 
-        key_timepoints = algorithm.time_series_segmentation(self.confusion_matrices_train, config.SEGMENT_COUNT)
-        return key_timepoints
+        key_timepoints = algorithm.time_series_segmentation(confusion_matrices, config.SEGMENT_COUNT)
+        scores = self.get_prediction_score(set_name, data_count, self.class_count, key_timepoints)
+        decision_last_iteration = helper.prob2decision(prediction_score)
+        cluster_result = clustering.instance_clustering(
+            self.class_count,
+            scores,
+            set,
+            decision_last_iteration
+        )
+        helper.save_json(cluster_result, join(self.data_root, "clustering_result_" + set_name + ".json"))
+        self.pre_split_features(set["X"], config.FEATURE_BIN_COUNT)
+        return confusion_matrices, key_timepoints
 
     def process(self):
-        self.endpoints_train = self.process_dataset(self.train_set)
+        helper.create_folder(self.data_root)
 
+        self.model.save_model(join(self.data_root, "model"))
+
+        np.save(join(self.data_root, "feature-raw-" + "train.npy"), self.train_set)
+
+        self.confusion_matrices_train, self.endpoints_train = self.process_dataset(self.train_set, "train")
+        np.save(join(self.data_root, "confusion_matrix_train.npy"), self.confusion_matrices_train)
         self.endpoints_valids = {}
         for valid in self.valid_sets:
-            self.endpoints_valids[valid] = self.process_dataset(self.valid_sets[valid])
+            self.confusion_matrices_valids[valid], self.endpoints_valids[valid] = self.process_dataset(self.valid_sets[valid], valid)
+            np.save(join(self.data_root, "confusion_matrix_" + valid + ".npy"), self.confusion_matrices_valids[valid])
+            np.save(join(self.data_root, "feature-raw-" + valid + ".npy"), self.valid_sets[valid])
+
+        helper.save_json(self.get_manifest(), join(self.data_root, "manifest"))
 
     def start_server(self):
         # TODO
         pass
 
-
 class LightGBMProcess(AbstractProcessor):
-
-    def __init__(self, m, train, valids, params):
-        super().__init__(m, train, valids, params)
-        self.iteration_count = params["num_iterations"]
-        self.feature_count = train.num_feature()
-        self.data_count = train.num_data()
-        labels = train.get_label()
+    def __init__(self, m, train, valids, params, data_root):
+        super().__init__(m, train, valids, params, data_root)
+        self.iteration_count = params["num_boost_round"]
+        self.data_count, self.feature_count = train["X"].shape
+        labels = train["y"]
         self.class_label = np.unique(labels)
         self.class_count = len(self.class_label)
+        self.class_label = self.class_label.tolist()
 
     def predict(self, data, num_iteration):
-        print("lightgbm predict")
+        # print("lightgbm predict")
         return self.model.predict(data, num_iteration=num_iteration)
 
     # return prediction scores
     def predict_one_iteration(self, data, iteration):
+        # d = self.model.predict(data, num_iteration=iteration, pred_leaf=True)
+        # self.model.get_leaf_output(1)
         # TODO: this is a temporary implementation
         if iteration == 0:
             return self.predict(data, iteration)
@@ -142,33 +169,3 @@ class XGBoostProcess(AbstractProcessor):
     def predict_one_iteration(self, data, iteration):
         # TODO
         pass
-
-
-def LightGBMTest():
-    dataset = datasets.load_digits()
-    lgb_train = lgb.Dataset(dataset["train"]["X"], dataset["train"]["y"])
-    lgb_valid = lgb.Dataset(dataset["valid"]["X"], dataset["valid"]["y"])
-    params = {
-        "tree_learner": "serial",
-        "is_train_metric": False,
-        "metric": ["multi_logloss", "multi_error"],
-        'task': 'train',
-        'max_depth': 4,
-        'num_leaves': 50,
-        'learning_rate': 0.1,
-        'num_iterations': 100,
-        'boosting_type': 'gbdt',
-        'objective': 'multiclass',
-        'min_data_in_leaf': 5,
-        'num_class': 10,
-        'nthread': -1,
-        'seed': 777
-    }
-    booster = lgb.train(params, lgb_train, num_boost_round=params["num_iterations"], valid_sets=[lgb_train, lgb_valid], valid_names=["train", "valid"])
-    l = LightGBMProcess(booster, lgb_train, {
-        "valid": lgb_valid
-    }, params)
-
-
-if __name__ == '__main__':
-    LightGBMTest()

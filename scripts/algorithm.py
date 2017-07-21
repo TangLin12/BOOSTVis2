@@ -1,9 +1,15 @@
 import numpy as np
+import math
 
 
 def time_series_segmentation(confusion_matrics, segment_count):
 	# TODO
-	return []
+	timepoint_count = len(confusion_matrics)
+	segment_count = min(segment_count, timepoint_count)
+	stride = math.ceil(timepoint_count / segment_count)
+	segment = np.arange(timepoint_count)[::stride]
+	segment[-1] = timepoint_count - 1
+	return segment.tolist()
 
 
 # using k-means clustering

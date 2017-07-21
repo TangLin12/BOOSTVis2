@@ -106,7 +106,7 @@ def merge_posterior(dataset_identifier, type="train"):
     if type is "train":
         output_path = join(root, "posteriors-train")
     else:
-        output_path = join(root, "posteriors-test")
+        output_path = join(root, "posteriors-tests")
 
     config = configparser.ConfigParser()
     config.read(join(root, "manifest"))
@@ -185,7 +185,7 @@ def cache_all_datasets():
         if "-" not in identifier:
             continue
         cache_feature_raw(identifier, "train")
-        cache_feature_raw(identifier, "test")
+        cache_feature_raw(identifier, "tests")
 
         print(identifier, "all cached")
 

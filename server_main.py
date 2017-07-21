@@ -7,6 +7,8 @@ from os import getcwd, makedirs
 import json
 from os.path import join, exists
 import math
+from os import getcwd
+from os.path import join
 
 import gc
 
@@ -66,6 +68,7 @@ def get_feature_matrix_for_cluster():
         'feature_matrix': feature_matrix,
         'feature_widths': features_split_widths.tolist()
     })
+
 
 # add by Shouxing, 2017 / 7 / 20
 @app.route('/api/feature_matrix_for_class', methods=['GET'])

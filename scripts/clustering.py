@@ -2,7 +2,9 @@
 
 import numpy as np
 import os
+from os.path import join
 from sklearn.cluster import KMeans
+from scripts import helper
 
 #TODO: It is manually set.
 CLUSTERING_K_MATRIX = [
@@ -41,6 +43,60 @@ def loadTrueLabel( filename ):
 	s = [ int(i) for i in s]
 	return np.array(s)
 
+def kmeans_clustering(score, k):
+	kmeans = KMeans(n_clusters=k, random_state=0).fit(score)
+	labels = kmeans.labels_.tolist()
+	centroids = kmeans.cluster_centers_.tolist()
+	cluster_size = np.bincount(labels).tolist()
+	return centroids, labels, cluster_size
+
+def instance_clustering(class_count, scores, set, decision):
+	y = set["y"]
+	X = set["X"]
+	data_count = X.shape[0]
+	clustering_result = {}
+	for i in range(class_count):
+		res = []
+		K = []
+		clusters = []
+		lines = []
+		prob = []
+		for j in range(class_count):
+			instance_index_j = []
+			for index in range(data_count):
+				if y[index] == j and decision[index] == i:
+					instance_index_j.append(index)
+			k = 5
+			if len(instance_index_j) < 50:
+				k = 1
+			centroids, labels, cluster_size = kmeans_clustering(scores[instance_index_j, :, i], k)
+			res.append({
+				"centroids": centroids,
+				"cluster_size": cluster_size,
+				"inst_cluster": labels
+			})
+			K.append(k)
+			clusters_by_class = []
+			line_by_class = []
+			prob_by_class = []
+			for c in range(len(centroids)):
+				cluster_instance_index = np.array(instance_index_j)[np.array(labels) == c]
+				clusters_by_class.append(cluster_instance_index.tolist())
+				line_by_class = np.mean(scores[cluster_instance_index][:, :, i], axis=0)
+				prob_by_class.append(line_by_class[-1])
+			clusters.append(clusters_by_class)
+			lines.append(line_by_class.tolist())
+			prob.append(prob_by_class)
+
+		clustering_result[i] = {
+			"res": res,
+			"K": K,
+			"clusters": clusters,
+			"lines": lines,
+			"prob": prob
+		}
+	return clustering_result
+
 def clustering( focused_class, type, dataset_identifier, clustering_all_instances=False):
 	'''
 		This function create clustering results caches and store them in disk
@@ -60,10 +116,10 @@ def clustering( focused_class, type, dataset_identifier, clustering_all_instance
 		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-train')
 		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, 'clustering/train-' + str(focused_class) )
 	else:
-		posteriorPath = os.path.join( RESULT_ROOT, dataset_identifier, 'posteriors-test-' + str(focused_class) )
+		posteriorPath = os.path.join( RESULT_ROOT, dataset_identifier, 'posteriors-tests-' + str(focused_class) )
 		trueLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'testing_label')
-		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-test')
-		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, 'clustering/test-' + str(focused_class) )
+		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-tests')
+		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, 'clustering/tests-' + str(focused_class) )
 	true_labels = loadTrueLabel( trueLabelPath )
 	predicted_label = loadPredictedLabel( predictedLabelPath )
 

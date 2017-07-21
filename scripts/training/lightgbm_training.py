@@ -27,7 +27,7 @@ def lightgbm_test(identifier, training, testing, params, info, full=False):
 	num_train, num_feature = training_data.shape
 	num_test = testing_data.shape[0]
 
-	result_folder = join(*[PROJECT_ROOT, "result", identifier])
+	result_folder = join(*[SCRIPT_ROOT, "result", identifier])
 	# if exists(result_folder):
 	# 	import shutil
 	# 	shutil.rmtree(result_folder)
@@ -125,8 +125,8 @@ def lightgbm_test(identifier, training, testing, params, info, full=False):
 	split_size = POSTERIOR_SPLIT_SIZE
 	train_pred_stash = []
 	test_pred_stash = []
-	train_posterior_folder = join(*[PROJECT_ROOT, "result", identifier, "posterior_full_train"])
-	test_posterior_folder = join(*[PROJECT_ROOT, "result", identifier, "posterior_full_test"])
+	train_posterior_folder = join(*[SCRIPT_ROOT, "result", identifier, "posterior_full_train"])
+	test_posterior_folder = join(*[SCRIPT_ROOT, "result", identifier, "posterior_full_test"])
 
 	if not exists(train_posterior_folder):
 		makedirs(train_posterior_folder)
@@ -197,7 +197,7 @@ def lightgbm_test(identifier, training, testing, params, info, full=False):
 		variance_train[t] = np.var(margin_train[t])
 		mean_value_train[t] = np.mean(margin_train[t])
 
-		# test margin related
+		# tests margin related
 		for i, y_pred_single in enumerate(test_pred):
 			true_label_index = int(testing_label[i])
 			true_label_prob = y_pred_single[true_label_index]
@@ -230,7 +230,7 @@ def lightgbm_test(identifier, training, testing, params, info, full=False):
 			"margin_mean_test": mean_value_test.tolist(),
 			"margin_variance_test": variance_test.tolist(),
 			"accuracy-train": train_accuracy_list,
-			"accuracy-test": test_accuracy_list
+			"accuracy-tests": test_accuracy_list
 		}, curve_file, ensure_ascii=True)
 	print("done")
 

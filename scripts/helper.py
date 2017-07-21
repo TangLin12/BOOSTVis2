@@ -1,66 +1,105 @@
-import numpy as np
 from os import makedirs
-from os.path import exists
-import shutil
+from os.path import exists, join
 
-import lightgbm as lgb
 import numpy as np
-from sklearn.metrics import accuracy_score, confusion_matrix
+from numpy import array
+import json
+from sklearn.model_selection import train_test_split
+from scripts import clustering
 
-#from logger import Logger
-from .config import *
-import pandas
+def save_json(object, path, message=None):
+	with open(path, 'w') as outfile:
+		json.dump(object, outfile)
+		if message:
+			print(message)
 
-import scipy as sp
-import configparser
-
-
-def get_posterior_all(identifier):
-    dataset_root = join(RESULT_ROOT, identifier)
-    config = configparser.ConfigParser()
-    config.read(join(dataset_root, "manifest"))
-    manifest = config["DEFAULT"]
-    iteration_count = int(manifest["iteration_count"])
-    class_count = int(manifest["class_count"])
-    data_count = int(manifest["data_count"])
-    posterior_folder = join(dataset_root, "posterior_full_train")
-
-    training_label = np.loadtxt(join(dataset_root, "training_label"), dtype=np.uint16)
-
-    posterior_all = np.zeros((iteration_count, data_count, class_count))
-    starts = np.arange(0, iteration_count, POSTERIOR_SPLIT_SIZE)
-    for t in starts:
-        posterior_split = np.load(join(posterior_folder, str(t) + "-" + str(t + 9) + ".npy"))
-        for i in range(len(posterior_split)):
-            posterior_all[t + i] = posterior_split[i]
-
-    return posterior_all
+def create_valid(X, y, test_size=0.33, random_state=42):
+	X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
+	return {
+		"train": {
+			"X": X_train,
+			"y": y_train
+		},
+		"valid": {
+			"X": X_test,
+			"y": y_test
+		}
+	}
 
 
 def prob2decision(pred):
-    result = np.zeros(pred.shape)
-    for i in range(pred.shape[0]):
-        decision = np.argmax(pred[i])
-        result[i, decision] = 1
-    return result
+	result = np.zeros(pred.shape[0])
+	for i in range(pred.shape[0]):
+		decision = np.argmax(pred[i])
+		result[i] = decision
+	return result
 
+def save_binary(nd_data, path, type='float32'):
+	array(nd_data.flatten(), type).tofile(path)
+	return
 
-from sklearn.metrics import log_loss
+def create_folder(d):
+	if not exists(d):
+		makedirs(d)
 
+		def instance_clustering(self, set_name, timepoints, set, decision):
+			y = set["y"]
+			X = set["X"]
+			data_count = X.shape[0]
+			scores = np.zeros(shape=(len(timepoints), data_count, self.class_count))
+			for i, t in enumerate(timepoints):
+				scores[i] = np.load(
+					join(self.data_root, set_name + "-prediction-score", "iteration-" + str(t) + ".npy"))
+			print(scores.shape)
+			scores = np.swapaxes(scores, 1, 0)
+			# scores_flatten = scores.reshape(data_count, -1)
+			clustering_result = {}
+			for i in range(self.class_count):
+				res = []
+				K = []
+				clusters = []
+				lines = []
+				prob = []
+				for j in range(self.class_count):
+					instance_index_j = []
+					for index in range(data_count):
+						if y[index] == j and decision[index] == i:
+							instance_index_j.append(index)
+					k = 5
 
-def compare_2_results(gt_path, pred_path):
-    gt = pandas.read_csv(gt_path, sep=',').as_matrix()[:, 1:]
-    pred = pandas.read_csv(pred_path, sep=',').as_matrix()[:, 1:]
-    # loss = logloss1(gt, pred)
-    from scipy.stats import entropy
-    dist = []
-    for p, q in zip(pred, gt):
-        dist.append(entropy(p, q))
-    print(sum(dist), np.mean(dist))
+					if len(instance_index_j) < 50:
+						k = 1
+
+					centroids, labels, cluster_size = clustering.kmeans_clustering(scores[instance_index_j, :, i], k)
+					res.append({
+						"centroids": centroids,
+						"cluster_size": cluster_size,
+						"inst_cluster": labels
+					})
+					K.append(k)
+					clusters_by_class = []
+					line_by_class = []
+					prob_by_class = []
+					for c in range(len(centroids)):
+						cluster_instance_index = np.array(instance_index_j)[np.array(labels) == c]
+						clusters_by_class.append(cluster_instance_index.tolist())
+						line_by_class = np.mean(scores[cluster_instance_index][:, :, i], axis=0)
+						prob_by_class.append(line_by_class[-1])
+					clusters.append(clusters_by_class)
+					lines.append(line_by_class.tolist())
+					prob.append(prob_by_class)
+
+				clustering_result[i] = {
+					"res": res,
+					"K": K,
+					"clusters": clusters,
+					"lines": lines,
+					"prob": prob
+				}
+
+			save_json(clustering_result, join(self.data_root, "clustering_result_" + set_name + ".json"))
 
 
 if __name__ == '__main__':
-    gt_path = join(RESULT_ROOT, "1_random_forest_benchmark.csv")
-    target = "lightgbm-otto-8-0.1-800"
-    pred_path = join(*[RESULT_ROOT, target, "predict.csv"])
-    compare_2_results(gt_path, pred_path)
+	a = np.random.rand(30, 3, 100)
+	save_binary(a, "t.bin")

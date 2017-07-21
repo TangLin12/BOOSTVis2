@@ -2,14 +2,14 @@ import configparser
 import json
 from os import makedirs
 from os.path import exists
-from ..datasets import load_otto
 
-import xgboost as xgb
 import numpy as np
+import xgboost as xgb
 from sklearn.metrics import accuracy_score, confusion_matrix
 
-from ..logger import Logger
+from tests.datasets import load_otto
 from ..config import *
+from ..logger import Logger
 
 
 def xgboost_test(identifier, training, testing, params, info):
@@ -20,7 +20,7 @@ def xgboost_test(identifier, training, testing, params, info):
 	num_train, num_feature = training_data.shape
 	num_test = testing_data.shape[0]
 
-	result_folder = join(*[PROJECT_ROOT, "result", identifier])
+	result_folder = join(*[SCRIPT_ROOT, "result", identifier])
 	if not exists(result_folder):
 		makedirs(result_folder)
 
@@ -61,7 +61,7 @@ def xgboost_test(identifier, training, testing, params, info):
 	else:
 		print('Start training...')
 		bst = xgb.train(params, training_mat,
-						evals=[(training_mat, "train"), (testing_mat, "test")],
+						evals=[(training_mat, "train"), (testing_mat, "tests")],
 						num_boost_round=params["num_round"],
 						callbacks=[monitor])
 		print("model trained")
@@ -95,8 +95,8 @@ def xgboost_test(identifier, training, testing, params, info):
 	split_size = POSTERIOR_SPLIT_SIZE
 	train_pred_stash = []
 	test_pred_stash = []
-	train_posterior_folder = join(*[PROJECT_ROOT, "result", identifier, "posterior_full_train"])
-	test_posterior_folder = join(*[PROJECT_ROOT, "result", identifier, "posterior_full_test"])
+	train_posterior_folder = join(*[SCRIPT_ROOT, "result", identifier, "posterior_full_train"])
+	test_posterior_folder = join(*[SCRIPT_ROOT, "result", identifier, "posterior_full_test"])
 
 	if not exists(train_posterior_folder):
 		makedirs(train_posterior_folder)
@@ -133,7 +133,7 @@ def xgboost_test(identifier, training, testing, params, info):
 		variance_train[t] = np.var(margin_train[t])
 		mean_value_train[t] = np.mean(margin_train[t])
 
-		# test margin related
+		# tests margin related
 		for i, y_pred_single in enumerate(test_pred):
 			true_label_index = int(testing_label[i])
 			true_label_prob = y_pred_single[true_label_index]
@@ -166,7 +166,7 @@ def xgboost_test(identifier, training, testing, params, info):
 			"margin_mean_test": mean_value_test.tolist(),
 			"margin_variance_test": variance_test.tolist(),
 			"accuracy-train": train_accuracy_list,
-			"accuracy-test": test_accuracy_list
+			"accuracy-tests": test_accuracy_list
 		}, curve_file, ensure_ascii=True)
 	print("done")
 
