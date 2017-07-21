@@ -36,8 +36,6 @@ function FeatureMatrix(container) {
 
     that.nFeaturePerPage = 20;
     that.featureStart = 0;
-    that.binBound = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];
-    that.nBins = that.binBound.length;
 
     that.mode = null;
     that.importanceMode = 1;
@@ -122,6 +120,45 @@ FeatureMatrix.prototype.get_used_features = function () {
     return tree_inspector.resultTree.get_drawn_node_features();
 };
 
+// add by Shouxing, 2017 / 7 / 20
+FeatureMatrix.prototype.update_bin_format_for_cluster = function () {
+    $.getJSON('/api/feature_matrix_for_cluster', {
+            cluster_ids: JSON.stringify(confidence_lines.cluster_id_set),
+            cluster_classes: JSON.stringify(confidence_lines.cluster_label_set),
+            features: JSON.stringify(feature_matrix.features)
+        }, function(data) {
+            console.log(data);
+            feature_matrix.binMatrix = data.feature_matrix;
+            feature_matrix.binWidths = data.feature_widths;
+        }
+    );
+};
+
+// add by Shouxing, 2017 / 7 / 20
+FeatureMatrix.prototype.update_bin_format = function () {
+    $.getJSON('/api/feature_matrix_for_class', {
+            class_id: JSON.stringify(get_current_focused_class()),
+            features: JSON.stringify(feature_matrix.features)
+        }, function(data) {
+            console.log(data);
+            feature_matrix.binMatrix = data.feature_matrix;
+            feature_matrix.binWidths = data.feature_widths;
+        }
+    );
+};
+
+// add by Shouxing, 2017 / 7 / 20
+FeatureMatrix.prototype.get_bin_exist_for_instance = function () {
+    $.getJSON('/api/bin_exist_for_instance', {
+            instance_id: JSON.stringify(confidence_lines.focused_instance),
+            features: JSON.stringify(feature_matrix.features)
+        }, function(data) {
+            console.log(data);
+            feature_matrix.binsInstance = data.bins_instance;
+        }
+    );
+};
+
 FeatureMatrix.prototype.render_feature_ranking_partially = function () {
     var that = feature_matrix;
 
@@ -139,17 +176,19 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
     // drawing codes
     that.clear_canvas();
 
-    var bins_focused_class = that.bins_focused_class;
-    var bins_other_classes = that.bins_other_classes;
+    var bin_matrix = that.binMatrix;
+    var bin_widths = that.binWidths;
+
+    var features = that.features;
+    var feature_number = features.length;
+    var start = that.featureStart;
 
     var text_width = Math.round((canvas_width) * 0.15);
     var bar_width = Math.round((canvas_width) * 0.7);
     var imp_width = Math.round((canvas_width) * 0.15);
 
-    var start = that.featureStart;
-
-    for (var k = 0; k < Math.min(that.nFeaturePerPage, FEATURE_COUNT - start); k++) {
-        var feature_id = sorted_features[k + start]['id'];
+    for (var k = 0; k < feature_number; k++) {
+        var feature_id = features[k];
         var ytop = Math.round((canvas_height - top_gap) / that.nFeaturePerPage * k + top_gap);
         var ybottom = Math.round((canvas_height - top_gap) / that.nFeaturePerPage * (k + 1) + top_gap);
 
@@ -158,12 +197,7 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
         that.fh_context.textBaseline = 'middle';
         that.fh_context.fillStyle = 'gray';
         that.fh_context.fillText(sorted_features[k + start]['value'].toFixed(1), text_width + bar_width + imp_width / 2, (ytop + ybottom) / 2);
-        that.fh_context.font = (10 * that.scale * 1.5) + 'px Arial';
         that.fh_context.fillText('F' + (feature_id + 1), text_width / 2, (ytop + ybottom) / 2);
-        //if (flags[feature_id] == true) {
-        //    that.fh_context.fillStyle = hexToRGB(color_manager.get_color(focused_class), 0.3);
-        //    that.fh_context.fillRect(0, ytop, text_width, ybottom - ytop);
-        //}
 
         that.fh_context.setLineDash([2 * that.scale, 3 * that.scale]);
         that.fh_context.strokeStyle = 'gray';
@@ -173,26 +207,19 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
         that.fh_context.stroke();
         that.fh_context.setLineDash([]);
 
-        var single_bar_width = 3 * that.scale;
-
-        //var bins_sum = [];
-        //for (i = 0; i < that.nBins; i++) {
-        //    bins_sum[i] = Math.pow(bins_focused_class[feature_id][i], 0.3) + Math.pow(bins_other_classes[feature_id][i], 0.3);
-        //}
-        //var max_bin = _.max(bins_sum);
-
         var transformed_bin_focus = [];
         var transformed_bin_others = [];
         var sum_bin = [0, 0];
         var max_bin = 0;
-        for (var i = 0; i < that.nBins; i++) {
-            transformed_bin_focus[i] = Math.pow(bins_focused_class[feature_id][i], 0.3);
-            transformed_bin_others[i] = Math.pow(bins_other_classes[feature_id][i], 0.3);
+        var bin_number = bin_widths[k].length;
+        for (var i = 0;i < bin_number; i++) {
+            transformed_bin_focus[i] = Math.pow(bin_matrix[k][0][i], 0.3);
+            transformed_bin_others[i] = Math.pow(bin_matrix[k][1][i], 0.3);
 
             sum_bin[0] += transformed_bin_focus[i];
             sum_bin[1] += transformed_bin_others[i];
         }
-        for (var i = 0;i < that.nBins; i++) {
+        for (var i = 0;i < bin_number; i++) {
             transformed_bin_focus[i] *= 100;
             transformed_bin_others[i] *= 100;
 
@@ -202,22 +229,24 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
             max_bin = Math.max(max_bin, transformed_bin_focus[i]);
             max_bin = Math.max(max_bin, transformed_bin_others[i]);
         }
-
-        for (i = 0; i < that.nBins; i++) {
+        var percent_begin = 0;
+        for (var i = 0;i < bin_number; i++) {
             var focus_bin_height = transformed_bin_focus[i] / max_bin * (ybottom - ytop - 5 * that.scale);
             var others_bin_height = transformed_bin_others[i] / max_bin * (ybottom - ytop - 5 * that.scale);
 
             focus_bin_height = focus_bin_height * (that.currentFrame / that.totalFrames);
             others_bin_height = others_bin_height * (that.currentFrame / that.totalFrames);
 
-            var xleft = Math.round(bar_width / that.nBins * i);
-            var xright = Math.round(bar_width / that.nBins * (i + 1));
+            var xleft = Math.round(bar_width * percent_begin / 100);
+            var xright = Math.round(bar_width * (percent_begin + bin_widths[k][i]) / 100);
             var xmid = Math.round((xleft + xright) / 2);
+            var single_bar_width = Math.round((xright - xleft) / 8);
 
             that.fh_context.fillStyle = hexToRGB(color_manager.get_color(focused_class));
             that.fh_context.fillRect(xmid + text_width, ybottom - focus_bin_height, single_bar_width, focus_bin_height);
             that.fh_context.fillStyle = hexToRGB('#AAAAAA', 0.7);
             that.fh_context.fillRect(xmid - single_bar_width + text_width, ybottom - others_bin_height, single_bar_width, others_bin_height);
+            percent_begin += bin_widths[k][i];
         }
     }
 
@@ -230,23 +259,6 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
     that.fh_context.fillText('Ranking', imp_width / 2 + text_width + bar_width, top_gap / 4);
     that.fh_context.fillText('Score', imp_width / 2 + text_width + bar_width, top_gap / 4 * 3);
     that.fh_context.fillText('Value Distribution', bar_width / 2 + text_width, top_gap / 4);
-    if (DATASET.indexOf("waveform") == -1) {
-        for (i = 0; i < that.nBins; i++) {
-            if (i == 0 || i == 10 || i == 15 || i == 20) {
-                xleft = bar_width / that.nBins * i;
-                xright = bar_width / that.nBins * (i + 1);
-                that.fh_context.fillText(that.binBound[i], (xleft + xright) / 2 + text_width, top_gap / 4 * 3);
-            }
-        }
-    } else {
-        for (i = 0; i < that.nBins; i++) {
-            if (i == 0 || i == 6 || i == 10 || i == 14) {
-                xleft = bar_width / that.nBins * i;
-                xright = bar_width / that.nBins * (i + 1);
-                that.fh_context.fillText(that.binBound[i], (xleft + xright) / 2 + text_width, top_gap / 4 * 3);
-            }
-        }
-    }
 
     that.fh_context.setLineDash([2 * that.scale, 3 * that.scale]);
     that.fh_context.strokeStyle = 'gray';
@@ -265,72 +277,19 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
     }
 };
 
-
-FeatureMatrix.prototype.update_binBound = function () {
-    if (DATASET.indexOf("waveform") == -1) return;
-    // get range of each feature
-    var that = this, e;
-    var max_value = -Infinity;
-    var min_value = Infinity;
-    for (var i = 0; i < FEATURE_COUNT; i++) {
-        for (var j = 0; j < INSTANCE_COUNT; j ++) {
-            e = RAW_FEATURES[j][i];
-        }
-        max_value = Math.max(max_value, e);
-        min_value = Math.min(min_value, e);
-    }
-    console.log(min_value, max_value);
-    if ((that.binBound[1] - that.binBound[0]) * 10 < max_value - min_value) {
-        return;
-    }
-    var lowerBound = Math.floor(min_value);
-    var upperBound = Math.floor(max_value);
-    var value_gap = (upperBound - lowerBound) / 20;
-    var gap = 1 / Math.floor(1 / value_gap);
-    that.binBound = [];
-    var i;
-    for (i = lowerBound; i < upperBound; i += gap) {
-        that.binBound.push(i);
-    }
-    that.binBound.push(i + gap);
-    that.nBins = that.binBound.length;
-    console.log(that.binBound.join(" "));
-};
-
 FeatureMatrix.prototype.render_feature_ranking = function () {
     $('#ranking-hint').css('display', 'inline');
 
     var that = this;
-    that.update_binBound();
     var focused_class = get_current_focused_class();
     that.get_average_feature_importance(focused_class);
-    that.mode = that.importanceMode;
-
-    var bins_focused_class = [];
-    var bins_other_classes = [];
-    for (var k = 0; k < FEATURE_COUNT; k++) {
-        bins_focused_class[k] = [];
-        bins_other_classes[k] = [];
-        for (var i = 0; i < that.nBins; i++) {
-            bins_focused_class[k][i] = 0;
-            bins_other_classes[k][i] = 0;
-        }
-        for (i = 0; i < INSTANCE_COUNT; i++) {
-            for (var w = 0; w < that.nBins; w++) {
-                if (RAW_FEATURES[i][k] >= that.binBound[w] && (w == that.nBins - 1 || RAW_FEATURES[i][k] < that.binBound[w + 1])) {
-                    if (TRUE_LABELS[i] == focused_class) {
-                        bins_focused_class[k][w]++;
-                    } else {
-                        bins_other_classes[k][w]++;
-                    }
-                    break;
-                }
-            }
-        }
+    var features = [];
+    for (var k = 0; k < Math.min(that.nFeaturePerPage, FEATURE_COUNT - that.featureStart); k++) {
+        features.push(that.sorted_features[k + that.featureStart]['id']);
     }
-    that.bins_focused_class = bins_focused_class;
-    that.bins_other_classes = bins_other_classes;
-
+    that.features = features;
+    that.update_bin_format();
+    that.mode = that.importanceMode;
     that.currentFrame = 0;
     window.requestAnimationFrame(that.render_feature_ranking_partially);
 };
@@ -348,53 +307,39 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = fun
     var sorted_features = that.sorted_features;
 
     var index = confidence_lines.focused_instance;
-
-    var bins_instance = [];
-    for (k = 0; k < FEATURE_COUNT; k++) {
-        bins_instance[k] = [];
-        for (i = 0; i < that.nBins; i++) {
-            bins_instance[k][i] = 0;
-        }
-        for (i = 0; i < that.nBins; i++) {
-            if (RAW_FEATURES[index][k] >= that.binBound[i] && (i == that.nBins - 1 || RAW_FEATURES[index][k] < that.binBound[i + 1])) {
-                bins_instance[k][i]++;
-                break;
-            }
-        }
-    }
-
-
-    var bins_focused_class = that.bins_focused_class;
-    var bins_other_classes = that.bins_other_classes;
+    var bins_instance = feature_matrix.binsInstance;
 
     //var flags = that.get_used_features();
 
     // drawing codes
     that.clear_canvas();
 
+    var bin_matrix = that.binMatrix;
+    var bin_widths = that.binWidths;
+
+    var features = that.features;
+    var feature_number = features.length;
+    var start = that.featureStart;
+
     var text_width = Math.round((canvas_width) * 0.15);
     var bar_width = Math.round((canvas_width) * 0.7);
     var imp_width = Math.round((canvas_width) * 0.15);
 
-    var start = that.featureStart;
 
-    for (var k = 0; k < Math.min(that.nFeaturePerPage, FEATURE_COUNT - start); k++) {
-        var feature_id = sorted_features[k + start]['id'];
+
+    for (var k = 0; k < feature_number; k++) {
+        var feature_id = features[k];
         var ytop = Math.round((canvas_height - top_gap) / that.nFeaturePerPage * k + top_gap);
         var ybottom = Math.round((canvas_height - top_gap) / that.nFeaturePerPage * (k + 1) + top_gap);
 
-        that.fh_context.font = '10px Arial';
+        that.fh_context.font = (10 * that.scale * 1.5) + 'px Arial';
         that.fh_context.textAlign = 'center';
         that.fh_context.textBaseline = 'middle';
         that.fh_context.fillStyle = 'gray';
-        that.fh_context.fillText('F' + (feature_id + 1), text_width / 2, (ytop + ybottom) / 2);
         that.fh_context.fillText(sorted_features[k + start]['value'].toFixed(1), text_width + bar_width + imp_width / 2, (ytop + ybottom) / 2);
-        //if (flags[feature_id] == true) {
-        //    that.fh_context.fillStyle = hexToRGB(color_manager.get_color(focused_class), 0.3);
-        //    that.fh_context.fillRect(0, ytop, text_width, ybottom - ytop);
-        //}
+        that.fh_context.fillText('F' + (feature_id + 1), text_width / 2, (ytop + ybottom) / 2);
 
-        that.fh_context.setLineDash([2, 3]);
+        that.fh_context.setLineDash([2 * that.scale, 3 * that.scale]);
         that.fh_context.strokeStyle = 'gray';
         that.fh_context.beginPath();
         that.fh_context.moveTo(0, ytop);
@@ -402,28 +347,44 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = fun
         that.fh_context.stroke();
         that.fh_context.setLineDash([]);
 
-        var single_bar_width = 3;
 
         var transformed_bin_focus = [];
         var transformed_bin_others = [];
-        for (var i = 0; i < that.nBins; i++) {
-            transformed_bin_focus[i] = Math.pow(bins_focused_class[feature_id][i], 0.3);
-            transformed_bin_others[i] = Math.pow(bins_other_classes[feature_id][i], 0.3);
-        }
-        var max_bin = Math.max(_.max(transformed_bin_focus), _.max(transformed_bin_others));
+        var sum_bin = [0, 0];
+        var max_bin = 0;
+        var bin_number = bin_widths[k].length;
+        for (var i = 0;i < bin_number; i++) {
+            transformed_bin_focus[i] = Math.pow(bin_matrix[k][0][i], 0.3);
+            transformed_bin_others[i] = Math.pow(bin_matrix[k][1][i], 0.3);
 
-        for (i = 0; i < that.nBins; i++) {
-            var focus_bin_height = transformed_bin_focus[i] / max_bin * (ybottom - ytop - 5);
-            var others_bin_height = transformed_bin_others[i] / max_bin * (ybottom - ytop - 5);
+            sum_bin[0] += transformed_bin_focus[i];
+            sum_bin[1] += transformed_bin_others[i];
+        }
+        for (var i = 0;i < bin_number; i++) {
+            transformed_bin_focus[i] *= 100;
+            transformed_bin_others[i] *= 100;
+
+            transformed_bin_focus[i] /= sum_bin[0];
+            transformed_bin_others[i] /= sum_bin[1];
+
+            max_bin = Math.max(max_bin, transformed_bin_focus[i]);
+            max_bin = Math.max(max_bin, transformed_bin_others[i]);
+        }
+        var percent_begin = 0;
+
+        for (var i = 0;i < bin_number; i++) {
+            var focus_bin_height = transformed_bin_focus[i] / max_bin * (ybottom - ytop - 5 * that.scale);
+            var others_bin_height = transformed_bin_others[i] / max_bin * (ybottom - ytop - 5 * that.scale);
 
             focus_bin_height = focus_bin_height * (that.currentFrame / that.totalFrames);
             others_bin_height = others_bin_height * (that.currentFrame / that.totalFrames);
 
-            var xleft = Math.round(bar_width / that.nBins * i);
-            var xright = Math.round(bar_width / that.nBins * (i + 1));
+            var xleft = Math.round(bar_width * percent_begin / 100);
+            var xright = Math.round(bar_width * (percent_begin + bin_widths[k][i]) / 100);
             var xmid = Math.round((xleft + xright) / 2);
+            var single_bar_width = Math.round((xright - xleft) / 8);
 
-            if (bins_instance[feature_id][i] > 0) {
+            if (bins_instance[k][i] > 0) {
                 that.fh_context.fillStyle = hexToRGB(color_manager.get_color(TRUE_LABELS[index]), 0.3);
                 that.fh_context.fillRect(xleft + text_width, ytop, xright - xleft, ybottom - ytop);
             }
@@ -432,10 +393,11 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = fun
             that.fh_context.fillRect(xmid + text_width, ybottom - focus_bin_height, single_bar_width, focus_bin_height);
             that.fh_context.fillStyle = hexToRGB('#AAAAAA', 0.7);
             that.fh_context.fillRect(xmid - single_bar_width + text_width, ybottom - others_bin_height, single_bar_width, others_bin_height);
+            percent_begin += bin_widths[k][i];
         }
     }
 
-    that.fh_context.font = '10px Arial';
+    that.fh_context.font = 10 * that.scale + 'px Arial';
     that.fh_context.textAlign = 'center';
     that.fh_context.textBaseline = 'middle';
     that.fh_context.fillStyle = 'gray';
@@ -444,16 +406,10 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = fun
     that.fh_context.fillText('Ranking', imp_width / 2 + text_width + bar_width, top_gap / 4);
     that.fh_context.fillText('Score', imp_width / 2 + text_width + bar_width, top_gap / 4 * 3);
     that.fh_context.fillText('Value Distribution', bar_width / 2 + text_width, top_gap / 4);
-    for (i = 0; i < that.nBins; i++) {
-        if (i == 0 || i == 10 || i == 15 || i == 20) {
-            xleft = bar_width / that.nBins * i;
-            xright = bar_width / that.nBins * (i + 1);
-            that.fh_context.fillText(that.binBound[i], (xleft + xright) / 2 + text_width, top_gap / 4 * 3);
-        }
-    }
 
-    that.fh_context.setLineDash([2, 3]);
+    that.fh_context.setLineDash([2 * that.scale, 3 * that.scale]);
     that.fh_context.strokeStyle = 'gray';
+    that.fh_context.lineWidth = 1 * that.scale;
     that.fh_context.beginPath();
     that.fh_context.moveTo(text_width, 0);
     that.fh_context.lineTo(text_width, canvas_height);
@@ -463,7 +419,7 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = fun
     that.fh_context.setLineDash([]);
 
     if (that.currentFrame < that.totalFrames) {
-        window.requestAnimationFrame(that.render_feature_ranking_with_one_instance_partially);
+        window.requestAnimationFrame(that.render_feature_ranking_partially);
     }
 };
 
@@ -473,33 +429,13 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance = function () {
     var that = this;
     var focused_class = get_current_focused_class();
     that.get_average_feature_importance(focused_class);
-    that.mode = that.importanceMode;
-
-    var bins_focused_class = [];
-    var bins_other_classes = [];
-    for (var k = 0; k < FEATURE_COUNT; k++) {
-        bins_focused_class[k] = [];
-        bins_other_classes[k] = [];
-        for (var i = 0; i < that.nBins; i++) {
-            bins_focused_class[k][i] = 0;
-            bins_other_classes[k][i] = 0;
-        }
-        for (i = 0; i < INSTANCE_COUNT; i++) {
-            for (var w = 0; w < that.nBins; w++) {
-                if (RAW_FEATURES[i][k] >= that.binBound[w] && (w == that.nBins - 1 || RAW_FEATURES[i][k] < that.binBound[w + 1])) {
-                    if (TRUE_LABELS[i] == focused_class) {
-                        bins_focused_class[k][w]++;
-                    } else {
-                        bins_other_classes[k][w]++;
-                    }
-                    break;
-                }
-            }
-        }
+    var features = [];
+    for (var k = 0; k < Math.min(that.nFeaturePerPage, FEATURE_COUNT - that.featureStart); k++) {
+        features.push(that.sorted_features[k + that.featureStart]['id']);
     }
-    that.bins_focused_class = bins_focused_class;
-    that.bins_other_classes = bins_other_classes;
-
+    that.features = features;
+    that.mode = that.importanceMode;
+    that.update_bin_format();
     that.currentFrame = 0;
     window.requestAnimationFrame(that.render_feature_ranking_with_one_instance_partially);
 };
@@ -516,31 +452,36 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters_partially = function
     var focused_class = confidence_lines.focused_class;
     var sorted_features = that.sorted_features;
 
-    var bins_collection = that.bins_collection;
     var cluster_count = confidence_lines.cluster_label_set.length;
     //var flags = that.get_used_features();
 
     // drawing codes
     that.clear_canvas();
 
+    var bin_matrix = that.binMatrix;
+    var bin_widths = that.binWidths;
+
+    var features = that.features;
+    var feature_number = features.length;
+    var start = that.featureStart;
+
     var text_width = Math.round((canvas_width) * 0.15);
     var bar_width = Math.round((canvas_width) * 0.7);
     var imp_width = Math.round((canvas_width) * 0.15);
 
-    var start = that.featureStart;
     that.fh_context.lineWidth = 1 * that.scale;
 
-    for (var k = 0; k < Math.min(that.nFeaturePerPage, FEATURE_COUNT - start); k++) {
-        var feature_id = sorted_features[k + start]['id'];
+    for (var k = 0; k < feature_number; k++) {
+        var feature_id = features[k];
         var ytop = Math.round((canvas_height - top_gap) / that.nFeaturePerPage * k + top_gap);
         var ybottom = Math.round((canvas_height - top_gap) / that.nFeaturePerPage * (k + 1) + top_gap);
 
-        that.fh_context.font = 10 * that.scale + 'px Arial';
+        that.fh_context.font = (10 * that.scale * 1.5) + 'px Arial';
         that.fh_context.textAlign = 'center';
         that.fh_context.textBaseline = 'middle';
         that.fh_context.fillStyle = 'gray';
-        that.fh_context.fillText('F' + (feature_id + 1), text_width / 2, (ytop + ybottom) / 2);
         that.fh_context.fillText(sorted_features[k + start]['value'].toFixed(1), text_width + bar_width + imp_width / 2, (ytop + ybottom) / 2);
+        that.fh_context.fillText('F' + (feature_id + 1), text_width / 2, (ytop + ybottom) / 2);
 
         //if (flags[feature_id] == true) {
         //    that.fh_context.fillStyle = hexToRGB(color_manager.get_color(focused_class), 0.3);
@@ -555,55 +496,54 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters_partially = function
         that.fh_context.stroke();
         that.fh_context.setLineDash([]);
 
-        var single_bar_width = 3 * that.scale;
-
         var max_bin = 0;
         var transformed_bin_collec = [];
         var sum_bin = new Array(cluster_count);
+        var bin_number = bin_widths[k].length;
         for (var j = 0;j < cluster_count; j++) {
             sum_bin[j] = 0;
         }
-        for (var i = 0; i < that.nBins; i++) {
-            transformed_bin_collec[i] = [];
-            for (var j = 0; j < cluster_count; j++) {
-                transformed_bin_collec[i][j] = Math.pow(bins_collection[j][feature_id][i], 0.3);
-                sum_bin[j] += transformed_bin_collec[i][j];
+        for (var i = 0;i < cluster_count; i++) {
+            for (var j = 0;j < bin_number; j++) {
+                transformed_bin_collec[i][j] = Math.pow(bin_matrix[k][i][j], 0.3);
+                sum_bin[i] += transformed_bin_collec[i][j];
             }
         }
-        for (var i = 0; i < that.nBins; i++) {
-            for (var j = 0; j < cluster_count; j++) {
+        for (var i = 0;i < cluster_count; i++) {
+            for (var j = 0;j < bin_number; j++) {
                 transformed_bin_collec[i][j] *= 100;
-                transformed_bin_collec[i][j] /= sum_bin[j];
+                transformed_bin_collec[i][j] /= sum_bin[i];
                 max_bin = Math.max(max_bin, transformed_bin_collec[i][j]);
             }
         }
+        var percent_begin = 0;
 
-        for (i = 0; i < that.nBins; i++) {
-            var xleft = bar_width / that.nBins * i;
-            var xright = bar_width / that.nBins * (i + 1);
-            var xmid = (xleft + xright) / 2;
-            xleft = xmid - (cluster_count * single_bar_width) / 2;
-            xright = xmid + (cluster_count * single_bar_width) / 2;
+        for (var i = 0;i < bin_number; i++) {
+            var xleft = Math.round(bar_width * percent_begin / 100);
+            var xright = Math.round(bar_width * (percent_begin + bin_widths[k][i]) / 100);
+            var xmid = Math.round((xleft + xright) / 2);
+            var single_bar_width = Math.round((xright - xleft) / 8);
             var bin_height = [];
             var bin_xleft = [];
             var bin_xright = [];
 
             for (j = 0; j < cluster_count; j++) {
-                bin_height[j] = transformed_bin_collec[i][j] / max_bin * (ybottom - ytop - 5);
+                bin_height[j] = transformed_bin_collec[i][j] / max_bin * (ybottom - ytop - 5 * that.scale);
                 bin_height[j] = bin_height[j] * (that.currentFrame / that.totalFrames);
-                bin_xleft[j] = xleft + j * single_bar_width;
+                bin_xleft[j] = xmid + (j - cluster_count / 2) * single_bar_width;
                 bin_xright[j] = bin_xleft[j] + single_bar_width;
             }
+
 
             for (j = 0; j < cluster_count; j++) {
                 that.fh_context.fillStyle = (changeColorLightness(color_manager.get_color(SELECTED_CLASSES[confidence_lines.cluster_label_set[j]]), confidence_lines.cluster_alpha_set[j]));
 
-                that.fh_context.fillRect(bin_xleft[j] + text_width, ybottom - bin_height[j], Math.min(bin_xright[j] - bin_xleft[j], single_bar_width), bin_height[j]);
+                that.fh_context.fillRect(bin_xleft[j] + text_width, ybottom - bin_height[j], single_bar_width, bin_height[j]);
             }
         }
     }
 
-    that.fh_context.font = 10  * that.scale + 'px Arial';
+    that.fh_context.font = 10 * that.scale + 'px Arial';
     that.fh_context.textAlign = 'center';
     that.fh_context.textBaseline = 'middle';
     that.fh_context.fillStyle = 'gray';
@@ -612,13 +552,6 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters_partially = function
     that.fh_context.fillText('Ranking', imp_width / 2 + text_width + bar_width, top_gap / 4);
     that.fh_context.fillText('Score', imp_width / 2 + text_width + bar_width, top_gap / 4 * 3);
     that.fh_context.fillText('Value Distribution', bar_width / 2 + text_width, top_gap / 4);
-    for (i = 0; i < that.nBins; i++) {
-        if (i == 0 || i == 10 || i == 15 || i == 20) {
-            xleft = bar_width / that.nBins * i;
-            xright = bar_width / that.nBins * (i + 1);
-            that.fh_context.fillText(that.binBound[i], (xleft + xright) / 2 + text_width, top_gap / 4 * 3);
-        }
-    }
 
     that.fh_context.setLineDash([2 * that.scale, 3 * that.scale]);
     that.fh_context.strokeStyle = 'gray';
@@ -640,7 +573,6 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters = function () {
     $('#ranking-hint').css('display', 'inline');
 
     var that = this;
-    that.update_binBound();
 
     that.container
         .transition()
@@ -648,32 +580,14 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters = function () {
         .style("opacity", 1);
     var focused_class = get_current_focused_class();
     that.get_average_feature_importance(focused_class);
-    that.mode = that.importanceMode;
-
-    var bins_collection = [];
-    var cluster_count = confidence_lines.cluster_label_set.length;
-    for (var j = 0; j < cluster_count; j++) {
-        var cluster = confidence_lines.clusters[confidence_lines.cluster_label_set[j]][confidence_lines.cluster_id_set[j]];
-        var bins = [];
-        for (var k = 0; k < FEATURE_COUNT; k++) {
-            bins[k] = [];
-            for (var i = 0; i < that.nBins; i++) {
-                bins[k][i] = 0;
-            }
-            for (i = 0; i < cluster.length; i++) {
-                var index = cluster[i];
-                for (var w = 0; w < that.nBins; w++) {
-                    if (RAW_FEATURES[index][k] >= that.binBound[w] && (w == that.nBins - 1 || RAW_FEATURES[index][k] < that.binBound[w + 1])) {
-                        bins[k][w]++;
-                        break;
-                    }
-                }
-            }
-        }
-        bins_collection.push(bins);
+    var features = [];
+    for (var k = 0; k < Math.min(that.nFeaturePerPage, FEATURE_COUNT - that.featureStart); k++) {
+        features.push(that.sorted_features[k + that.featureStart]['id']);
     }
-    that.bins_collection = bins_collection;
+    that.features = features;
+    that.update_bin_format_for_cluster();
 
+    that.mode = that.importanceMode;
     that.currentFrame = 0;
     window.requestAnimationFrame(that.render_feature_ranking_for_clusters_partially);
 };
@@ -687,40 +601,42 @@ FeatureMatrix.prototype.render_separation_features_for_clusters_partially = func
     var canvas_width = that.fh_canvas.width;
     var top_gap = that.fh_canvas.top_gap;
 
-    var cluster_count = confidence_lines.cluster_label_set.length;
     var focused_class = confidence_lines.focused_class;
-
-    var bins_collection = that.bins_collection;
     var sorted_features = that.sorted_features;
 
+    var cluster_count = confidence_lines.cluster_label_set.length;
     //var flags = that.get_used_features();
 
     // drawing codes
     that.clear_canvas();
 
+    var bin_matrix = that.binMatrix;
+    var bin_widths = that.binWidths;
+
+    var features = that.features;
+    var start = that.featureStart;
+
     var text_width = Math.round((canvas_width) * 0.15);
     var bar_width = Math.round((canvas_width) * 0.7);
     var imp_width = Math.round((canvas_width) * 0.15);
-
-    var start = that.featureStart;
 
     for (var k = 0; k < Math.min(that.nFeaturePerPage, FEATURE_COUNT - start); k++) {
         var feature_id = sorted_features[k + start]['id'];
         var ytop = Math.round((canvas_height - top_gap) / that.nFeaturePerPage * k + top_gap);
         var ybottom = Math.round((canvas_height - top_gap) / that.nFeaturePerPage * (k + 1) + top_gap);
 
-        that.fh_context.font = '10px Arial';
+        that.fh_context.font = (10 * that.scale * 1.5) + 'px Arial';
         that.fh_context.textAlign = 'center';
         that.fh_context.textBaseline = 'middle';
         that.fh_context.fillStyle = 'gray';
-        that.fh_context.fillText('F' + (feature_id + 1), text_width / 2, (ytop + ybottom) / 2);
         that.fh_context.fillText(sorted_features[k + start]['value'].toFixed(1), text_width + bar_width + imp_width / 2, (ytop + ybottom) / 2);
+        that.fh_context.fillText('F' + (feature_id + 1), text_width / 2, (ytop + ybottom) / 2);
         //if (flags[feature_id] == true) {
         //    that.fh_context.fillStyle = hexToRGB(color_manager.get_color(focused_class), 0.3);
         //    that.fh_context.fillRect(0, ytop, text_width, ybottom - ytop);
         //}
 
-        that.fh_context.setLineDash([2, 3]);
+        that.fh_context.setLineDash([2 * that.scale, 3 * that.scale]);
         that.fh_context.strokeStyle = 'gray';
         that.fh_context.beginPath();
         that.fh_context.moveTo(0, ytop);
@@ -728,41 +644,49 @@ FeatureMatrix.prototype.render_separation_features_for_clusters_partially = func
         that.fh_context.stroke();
         that.fh_context.setLineDash([]);
 
-        var single_bar_width = 3;
-
         var max_bin = 0;
         var transformed_bin_collec = [];
-        for (var i = 0; i < that.nBins; i++) {
-            transformed_bin_collec[i] = [];
-            for (var j = 0; j < cluster_count; j++) {
-                transformed_bin_collec[i][j] = Math.pow(bins_collection[j][feature_id][i], 0.3);
+        var sum_bin = new Array(cluster_count);
+        var bin_number = bin_widths[feature_id].length;
+        for (var j = 0;j < cluster_count; j++) {
+            sum_bin[j] = 0;
+        }
+        for (var i = 0;i < cluster_count; i++) {
+            for (var j = 0;j < bin_number; j++) {
+                transformed_bin_collec[i][j] = Math.pow(bin_matrix[feature_id][i][j], 0.3);
+                sum_bin[i] += transformed_bin_collec[i][j];
+            }
+        }
+        for (var i = 0;i < cluster_count; i++) {
+            for (var j = 0;j < bin_number; j++) {
+                transformed_bin_collec[i][j] *= 100;
+                transformed_bin_collec[i][j] /= sum_bin[i];
                 max_bin = Math.max(max_bin, transformed_bin_collec[i][j]);
             }
         }
+        var percent_begin = 0;
 
-        for (i = 0; i < that.nBins; i++) {
-            var xleft = bar_width / that.nBins * i;
-            var xright = bar_width / that.nBins * (i + 1);
-            var xmid = (xleft + xright) / 2;
-            xleft = xmid - (cluster_count * single_bar_width) / 2;
-            xright = xmid + (cluster_count * single_bar_width) / 2;
+        for (var i = 0;i < bin_number; i++) {
+            var xleft = Math.round(bar_width * percent_begin / 100);
+            var xright = Math.round(bar_width * (percent_begin + bin_widths[feature_id][i]) / 100);
+            var xmid = Math.round((xleft + xright) / 2);
+            var single_bar_width = Math.round((xright - xleft) / 8);
             var bin_height = [];
             var bin_xleft = [];
             var bin_xright = [];
 
             for (j = 0; j < cluster_count; j++) {
-                bin_height[j] = transformed_bin_collec[i][j] / max_bin * (ybottom - ytop - 5);
-                //bin_xleft[j] = Math.round((xright - xleft - 2) / cluster_count * j + xleft + 1);
-                //bin_xright[j] = Math.round((xright - xleft - 2) / cluster_count * (j + 1) + xleft + 1);
+                bin_height[j] = transformed_bin_collec[i][j] / max_bin * (ybottom - ytop - 5 * that.scale);
                 bin_height[j] = bin_height[j] * (that.currentFrame / that.totalFrames);
-                bin_xleft[j] = xleft + j * single_bar_width;
+                bin_xleft[j] = xmid + (j - cluster_count / 2) * single_bar_width;
                 bin_xright[j] = bin_xleft[j] + single_bar_width;
             }
 
+
             for (j = 0; j < cluster_count; j++) {
-                //that.fh_context.fillStyle = hexToRGB(color_manager.get_color(SELECTED_CLASSES[confidence_lines.cluster_label_set[j]]), confidence_lines.cluster_alpha_set[j]);
                 that.fh_context.fillStyle = (changeColorLightness(color_manager.get_color(SELECTED_CLASSES[confidence_lines.cluster_label_set[j]]), confidence_lines.cluster_alpha_set[j]));
-                that.fh_context.fillRect(bin_xleft[j] + text_width, ybottom - bin_height[j], Math.min(bin_xright[j] - bin_xleft[j], single_bar_width), bin_height[j]);
+
+                that.fh_context.fillRect(bin_xleft[j] + text_width, ybottom - bin_height[j], single_bar_width, bin_height[j]);
             }
         }
     }
@@ -776,15 +700,8 @@ FeatureMatrix.prototype.render_separation_features_for_clusters_partially = func
     that.fh_context.fillText('Ranking', imp_width / 2 + text_width + bar_width, top_gap / 4);
     that.fh_context.fillText('Score', imp_width / 2 + text_width + bar_width, top_gap / 4 * 3);
     that.fh_context.fillText('Value Distribution', bar_width / 2 + text_width, top_gap / 4);
-    for (i = 0; i < that.nBins; i++) {
-        if (i == 0 || i == 10 || i == 15 || i == 20) {
-            xleft = bar_width / that.nBins * i;
-            xright = bar_width / that.nBins * (i + 1);
-            that.fh_context.fillText(that.binBound[i], (xleft + xright) / 2 + text_width, top_gap / 4 * 3);
-        }
-    }
 
-    that.fh_context.setLineDash([2, 3]);
+    that.fh_context.setLineDash([2 * that.scale, 3 * that.scale]);
     that.fh_context.strokeStyle = 'gray';
     that.fh_context.beginPath();
     that.fh_context.moveTo(text_width, 0);
@@ -808,46 +725,33 @@ FeatureMatrix.prototype.render_separation_features_for_clusters = function () {
     }
 
     var that = this;
+    var features = [];
+    for (var i = 0; i < FEATURE_COUNT;i++) {
+        features[i] = i;
+    }
+    that.features = features;
+    that.update_bin_format_for_cluster();
     that.mode = that.separationMode;
 
-    var bins_collection = [];
-    for (var j = 0; j < cluster_count; j++) {
-        var cluster = confidence_lines.clusters[confidence_lines.cluster_label_set[j]][confidence_lines.cluster_id_set[j]];
-        var bins = [];
-        for (var k = 0; k < FEATURE_COUNT; k++) {
-            bins[k] = [];
-            for (var i = 0; i < that.nBins; i++) {
-                bins[k][i] = 0;
-            }
-            for (i = 0; i < cluster.length; i++) {
-                var index = cluster[i];
-                for (var w = 0; w < that.nBins; w++) {
-                    if (RAW_FEATURES[index][k] >= that.binBound[w] && (w == that.nBins - 1 || RAW_FEATURES[index][k] < that.binBound[w + 1])) {
-                        bins[k][w]++;
-                        break;
-                    }
-                }
-            }
-        }
-        bins_collection.push(bins);
-    }
-    that.bins_collection = bins_collection;
+    var bin_matrix = that.binMatrix;
+    var bin_widths = that.binWidths;
 
     var separation_power = [];
     var sorted_features = [];
     for (k = 0; k < FEATURE_COUNT; k++) {
         separation_power[k] = 0;
         var total_bin_sum = 0;
-        for (i = 0; i < that.nBins; i++) {
+        var bin_number = bin_widths[k].length;
+        for (i = 0; i < bin_number; i++) {
             var bin_sum = 0;
             for (j = 0; j < cluster_count; j++) {
-                bin_sum += bins_collection[j][k][i];
+                bin_sum += bin_matrix[k][j][i];
             }
             if (bin_sum == 0) {
                 continue;
             }
             for (j = 0; j < cluster_count; j++) {
-                separation_power[k] += bins_collection[j][k][i] * bins_collection[j][k][i] / bin_sum;
+                separation_power[k] += bin_matrix[k][j][i] * bin_matrix[k][j][i] / bin_sum;
             }
             total_bin_sum += bin_sum;
         }
@@ -933,9 +837,8 @@ FeatureMatrix.prototype.get_average_feature_importance2 = function (focused_clas
     return imp;
 };
 
-
-
 FeatureMatrix.prototype.render_separation_features_old = function (iteration, class_label, inst_idx, cluster_label) {
+    //stop here, 2017/7/21 09:35
     var that = this;
     var canvas_height = that.fh_canvas.height,
         canvas_width = that.fh_canvas.width;

@@ -39,45 +39,45 @@ def get_confusion_matrix():
     else:
         confusion_matrix = np.load(join(dataset_path, "confusion_matrix_test.npy"))
     return jsonify(confusion_matrix.tolist())
-#
-# # add by Shouxing, 2017 / 7 / 20
-# @app.route('/api/feature_matrix_for_cluster')
-# def get_feature_matrix():
-#     cluster_ids = json.loads(request.args.get('cluster_ids'))
-#     cluster_classes = json.loads(request.args.get('cluster_classes'))
-#     features = json.loads(request.args.get('features'))
-#     # TODO get matrix of instances and features: feature_raw
-#     feature_raw = np.array([[0]])
-#     size = len(cluster_ids)
-#     # TODO get the directory path
-#     features_split_values = np.load('features_split_values.npy')
-#     features_split_widths = np.load('features_split_widths.npy')
-#
-#     feature_matrix = []
-#     for feature_id in features:
-#         row = []
-#         for i in range(size):
-#             instance_ids = []  # get by cluster_ids[i] and cluster_classes[i]
-#             # TODO get instance ids for a tuple (cluster_id, cluster_class):
-#             bins = features_split_values[feature_id]
-#             feature_values = [feature_raw[instance_id][feature_id] for instance_id in instance_ids]
-#             distribution = get_feature_distribution(feature_values, bins)
-#             row.append(distribution)
-#         feature_matrix.append(row)
-#     return jsonify({
-#         'feature_matrix': feature_matrix,
-#         'feature_widths': features_split_widths.tolist()
-#     })
 
 # add by Shouxing, 2017 / 7 / 20
-@app.route('/api/feature_matrix_for_class')
-def get_feature_matrix():
+@app.route('/api/feature_matrix_for_cluster', methods=['GET'])
+def get_feature_matrix_for_cluster():
+    cluster_ids = json.loads(request.args.get('cluster_ids'))
+    cluster_classes = json.loads(request.args.get('cluster_classes'))
+    features = json.loads(request.args.get('features'))
+    # TODO get matrix of instances and features: feature_raw
+    feature_raw = np.array([[0]])
+    size = len(cluster_ids)
+    # TODO get the directory path
+    features_split_values = np.load('features_split_values.npy')
+    features_split_widths = np.load('features_split_widths.npy')
+
+    feature_matrix = []
+    for feature_id in features:
+        row = []
+        for i in range(size):
+            instance_ids = []  # get by cluster_ids[i] and cluster_classes[i]
+            # TODO get instance ids for a tuple (cluster_id, cluster_class):
+            bins = features_split_values[feature_id]
+            feature_values = [feature_raw[instance_id][feature_id] for instance_id in instance_ids]
+            distribution = get_feature_distribution(feature_values, bins)
+            row.append(distribution)
+        feature_matrix.append(row)
+    return jsonify({
+        'feature_matrix': feature_matrix,
+        'feature_widths': features_split_widths.tolist()
+    })
+
+
+# add by Shouxing, 2017 / 7 / 20
+@app.route('/api/feature_matrix_for_class', methods=['GET'])
+def get_feature_matrix_for_class():
     class_id = json.loads(request.args.get('class_id'))
     features = json.loads(request.args.get('features'))
     # TODO get matrix of instances and features: feature_raw
     feature_raw = np.array([[0]])
     # TODO get labels of instances: instance_labels
-    feature_raw = np.array([[0]])
     instance_labels = np.array([0])
     # TODO get the directory path
     features_split_values = np.load('features_split_values.npy')
@@ -105,7 +105,25 @@ def get_feature_matrix():
         'feature_widths': features_split_widths.tolist()
     })
 
+# add by Shouxing, 2017 / 7 / 20
+@app.route('/api/bin_exist_for_instance', methods=['GET'])
+def get_bin_exist_for_instance():
+    instance_id = json.loads(request.args.get('instance_id'))
+    features = json.loads(request.args.get('features'))
+    # TODO get matrix of instances and features: feature_raw
+    feature_raw = np.array([[0]])
+    # TODO get the directory path
+    features_split_values = np.load('features_split_values.npy')
 
+    bins_instance = []
+    for feature_id in features:
+        bins = features_split_values[feature_id]
+        feature_values = [feature_raw[instance_id][feature_id]]
+        distribution = get_feature_distribution(feature_values, bins)
+        bins_instance.append(distribution)
+    return jsonify({
+        'bins_instance': bins_instance
+    })
 
 @app.route('/api/feature-importance-tree-size', methods=['GET'])
 def get_feature_importance_tree_size():
