@@ -145,19 +145,29 @@ class LightGBMProcess(AbstractProcessor):
         self.class_count = len(self.class_label)
         self.class_label = self.class_label.tolist()
 
+    def get_prediction_score_all_iterations(self, data, model, class_count, iteration):
+        leaf_ids = model.predict(data, pred_leaf=True)
+        leaf_id_max = np.max(leaf_ids, axis=0) # iteration * class_count
+        leaf_values = []
+        for t in range(iteration):
+            for i in range(class_count):
+                tree_id = iteration * self.class_count + i
+                values = np.zeros(shape=(leaf_id_max[i] + 1))
+                for leaf_id in range(leaf_id_max[i]):
+                    values[leaf_id] = self.model.get_leaf_output(tree_id, leaf_id)
+                leaf_values.append(values)
+
+        score_single_iteration = np.zeros_like(leaf_ids)
+        for i in range(data.shape[0]):
+            for j in range(self.class_count):
+                score_single_iteration[i][j] = leaf_values[j][leaf_ids[i][j]]
+
+        return score_single_iteration
+
     def predict(self, data, num_iteration):
         # print("lightgbm predict")
         return self.model.predict(data, num_iteration=num_iteration)
 
-    # return prediction scores
-    def predict_one_iteration(self, data, iteration):
-        # d = self.model.predict(data, num_iteration=iteration, pred_leaf=True)
-        # self.model.get_leaf_output(1)
-        # TODO: this is a temporary implementation
-        if iteration == 0:
-            return self.predict(data, iteration)
-        else:
-            return self.predict(data, iteration) - self.predict(data, iteration - 1)
 
 class XGBoostProcess(AbstractProcessor):
 

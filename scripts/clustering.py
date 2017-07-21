@@ -72,9 +72,9 @@ def instance_clustering(class_count, scores, set, decision):
 				k = 0
 			elif len(instance_index_j) <= 50:
 				k = 1
-			centroids = np.array([])
-			labels = np.array([])
-			cluster_size = np.array([])
+			centroids = []
+			labels = []
+			cluster_size = []
 			if k != 0:
 				if len(instance_index_j) == 0:
 					print("")
@@ -106,6 +106,7 @@ def instance_clustering(class_count, scores, set, decision):
 			"prob": prob
 		}
 	return clustering_result
+
 
 def clustering( focused_class, type, dataset_identifier, clustering_all_instances=False):
 	'''
