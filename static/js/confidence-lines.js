@@ -153,14 +153,49 @@ ConfidenceLines.prototype.canvas_mousedown = function (e) {
 
                     confidence_lines.cluster_label = cluster_label;
                     confidence_lines.cluster_id = cluster_id;
-
-                    if (confidence_lines.cluster_label_set.length > 1) {
-                        confidence_lines.cluster_label_set = confidence_lines.cluster_label_set.slice(1, 4);
-                        confidence_lines.cluster_id_set = confidence_lines.cluster_id_set.slice(1, 4);
+                    // add by Shouxing, 2017 / 7 / 20
+                    var clusterSetSize = confidence_lines.cluster_id_set.length;
+                    if (clusterSetSize >= 7) {
+                        confidence_lines.cluster_label = cluster_label;
+                        confidence_lines.cluster_id = cluster_id;
+                        confidence_lines.cluster_label_set.splice(0, 1);
+                        confidence_lines.cluster_id_set.splice(0, 1);
+                        confidence_lines.cluster_label_set.push(cluster_label);
+                        confidence_lines.cluster_id_set.push(cluster_id);
                     }
-
-                    confidence_lines.cluster_label_set.push(cluster_label);
-                    confidence_lines.cluster_id_set.push(cluster_id);
+                    else {
+                        var sameLabelCount = 0;
+                        for (i = clusterSetSize - 1;i >= 0;i--) {
+                            if (confidence_lines.cluster_label_set[i] == cluster_label) {
+                                sameLabelCount++;
+                                if(confidence_lines.cluster_id_set[i] == cluster_id) {
+                                    confidence_lines.cluster_id_set.splice(i, 1);
+                                    confidence_lines.cluster_label_set.splice(i, 1);
+                                    if (i == clusterSetSize - 1) {
+                                        confidence_lines.cluster_label = confidence_lines.cluster_label_set[-1];
+                                        confidence_lines.cluster_id = confidence_lines.cluster_id_set[-1];
+                                    }
+                                    break;
+                                }
+                                if (sameLabelCount == 2) {
+                                    confidence_lines.cluster_id_set.splice(i, 1);
+                                    confidence_lines.cluster_label_set.splice(i, 1);
+                                    confidence_lines.cluster_label_set.push(cluster_label);
+                                    confidence_lines.cluster_id_set.push(cluster_id);
+                                    confidence_lines.cluster_label = cluster_label;
+                                    confidence_lines.cluster_id = cluster_id;
+                                    break;
+                                }
+                            }
+                        }
+                        if (i == -1) {
+                            confidence_lines.cluster_label_set.push(cluster_label);
+                            confidence_lines.cluster_id_set.push(cluster_id);
+                            confidence_lines.cluster_label = cluster_label;
+                            confidence_lines.cluster_id = cluster_id;
+                        }
+                    }
+                    tree_inspector.update_cluster_information();
 
                     confidence_lines.update_cluster_alpha_value();
 
@@ -188,39 +223,50 @@ ConfidenceLines.prototype.canvas_mousedown = function (e) {
             if (line != null) {
                 var cluster_label = line.k;
                 var cluster_id = line.i;
-
+                // add by Shouxing, 2017 / 7 / 20
                 var clusterSetSize = confidence_lines.cluster_id_set.length;
-                var sameLabelCount = 0;
-                for (var i = clusterSetSize - 1;i >= 0;i--) {
-                    if (confidence_lines.cluster_label_set[i] == cluster_label) {
-                        sameLabelCount++;
-                        if(confidence_lines.cluster_id_set[i] == cluster_id) {
-                            confidence_lines.cluster_id_set.splice(i, 1);
-                            confidence_lines.cluster_label_set.splice(i, 1);
-                            if (i == clusterSetSize - 1) {
-                                confidence_lines.cluster_label = confidence_lines.cluster_label_set[-1];
-                                confidence_lines.cluster_id = confidence_lines.cluster_id_set[-1];
-                            }
-                            break;
-                        }
-                        if (sameLabelCount == 2) {
-                            confidence_lines.cluster_id_set.splice(i, 1);
-                            confidence_lines.cluster_label_set.splice(i, 1);
-                            confidence_lines.cluster_label_set.push(cluster_label);
-                            confidence_lines.cluster_id_set.push(cluster_id);
-                            confidence_lines.cluster_label = cluster_label;
-                            confidence_lines.cluster_id = cluster_id;
-                            break;
-                        }
-                    }
-                }
-                if (i == -1) {
-                    confidence_lines.cluster_label_set.push(cluster_label);
-                    confidence_lines.cluster_id_set.push(cluster_id);
+                if (clusterSetSize >= 7) {
                     confidence_lines.cluster_label = cluster_label;
                     confidence_lines.cluster_id = cluster_id;
+                    confidence_lines.cluster_label_set.splice(0, 1);
+                    confidence_lines.cluster_id_set.splice(0, 1);
+                    confidence_lines.cluster_label_set.push(cluster_label);
+                    confidence_lines.cluster_id_set.push(cluster_id);
                 }
-                //tree_inspector.update_cluster_information();
+                else {
+                    var sameLabelCount = 0;
+                    for (i = clusterSetSize - 1;i >= 0;i--) {
+                        if (confidence_lines.cluster_label_set[i] == cluster_label) {
+                            sameLabelCount++;
+                            if(confidence_lines.cluster_id_set[i] == cluster_id) {
+                                confidence_lines.cluster_id_set.splice(i, 1);
+                                confidence_lines.cluster_label_set.splice(i, 1);
+                                if (i == clusterSetSize - 1) {
+                                    confidence_lines.cluster_label = confidence_lines.cluster_label_set[-1];
+                                    confidence_lines.cluster_id = confidence_lines.cluster_id_set[-1];
+                                }
+                                break;
+                            }
+                            if (sameLabelCount == 2) {
+                                confidence_lines.cluster_id_set.splice(i, 1);
+                                confidence_lines.cluster_label_set.splice(i, 1);
+                                confidence_lines.cluster_label_set.push(cluster_label);
+                                confidence_lines.cluster_id_set.push(cluster_id);
+                                confidence_lines.cluster_label = cluster_label;
+                                confidence_lines.cluster_id = cluster_id;
+                                break;
+                            }
+                        }
+                    }
+                    if (i == -1) {
+                        confidence_lines.cluster_label_set.push(cluster_label);
+                        confidence_lines.cluster_id_set.push(cluster_id);
+                        confidence_lines.cluster_label = cluster_label;
+                        confidence_lines.cluster_id = cluster_id;
+                    }
+                }
+
+                tree_inspector.update_cluster_information();
 
 
 
