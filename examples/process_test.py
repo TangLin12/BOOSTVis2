@@ -81,7 +81,7 @@ def LightGBMTest():
 		'bagging_freq': 5,
 		'verbose': 0,
 		'num_boost_round': 100,
-		'num_class': 5
+		'num_class': 9
 	}
 
 	booster = lgb.train(params,

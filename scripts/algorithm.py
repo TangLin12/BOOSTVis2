@@ -18,18 +18,18 @@ def cluster_instance(prediction_scores, k):
 	return {}
 
 
-def split_feature(feature_values: np.array, bin_count: int) -> np.array:
+def split_feature(feature_values: list, bin_count: int) -> list:
 	'''This function generates split values of a given feature, given a count of bins.
 	
-	:param feature_values: 1-d array of feature values.
+	:param feature_values: list of feature values (n * 1)
     :param bin_count: the number of bins.
     
-    :return: dictionary contains np.array, the bin values and bin width
+    :return:the dictionary contains lists, the bin values and bin width
 	'''
 	# TODO
 	# add by Shouxing, 2017 / 7 / 20
 	feature_values.sort()
-	size = feature_values.size
+	size = len(feature_values)
 	count = 0
 	value = [feature_values[0]]
 	width = []
@@ -67,18 +67,18 @@ def split_feature(feature_values: np.array, bin_count: int) -> np.array:
 		'bin_width': [round(100 * x / size, 2) for x in bin_width]
 	}
 
-
-def get_feature_distribution(feature_values: np.array, bins: np.array) -> np.array:
+import time
+def get_feature_distribution(feature_values: list, bins: list) -> list:
 	'''This function generates distribution of a given feature, the bins are given
 
-	:param feature_values: 1-d array of feature values.
-    :param bins: the bin values.
+	:param feature_values: list of feature values.
+    :param bins: list of the bin values.
 
-    :return: np.array, the histogram of each bin
+    :return: list, the histogram of each bin
 	'''
 	# TODO
 	# add by Shouxing, 2017 / 7 / 20
-	size = bins.size
+	size = len(bins)
 	histogram = [0] * (size - 1)
 	for x in feature_values:
 		l = 0
@@ -92,5 +92,4 @@ def get_feature_distribution(feature_values: np.array, bins: np.array) -> np.arr
 				r = temp - 1
 			else:
 				l = temp + 1
-
 	return histogram

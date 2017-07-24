@@ -2,13 +2,15 @@ from flask import Flask, jsonify
 import numpy as np
 import configparser
 from scripts.algorithm import *
-from os import getcwd, makedirs
+import os
+import sys
 
 import json
 from os.path import join, exists
 import math
 from os import getcwd
 from os.path import join
+from warehouse import *
 
 import gc
 
@@ -44,44 +46,53 @@ def get_confusion_matrix():
 @app.route('/api/feature_matrix_for_cluster', methods=['GET'])
 def get_feature_matrix_for_cluster():
     cluster_ids = json.loads(request.args.get('cluster_ids'))
+    class_id = json.loads(request.args.get('class_id'))
     cluster_classes = json.loads(request.args.get('cluster_classes'))
     features = json.loads(request.args.get('features'))
-    # TODO get matrix of instances and features: feature_raw
-    feature_raw = np.array([[0]])
+    set_type = json.loads(request.args.get('set_type'))
+    current_module = sys.modules[__name__]
+    project_root = os.path.dirname(current_module.__file__)
+    project_root = join(project_root, 'result', 'result-test')
+    feature_raw_info = np.load(join(project_root, 'feature-raw-' + str(set_type) + '.npy'))
+    feature_raw = feature_raw_info.tolist()['X']
     size = len(cluster_ids)
-    # TODO get the directory path
-    features_split_values = np.load('features_split_values.npy')
-    features_split_widths = np.load('features_split_widths.npy')
+    features_split_values = np.load(join(project_root, 'features_split_values_' + str(set_type) + '.npy'))
+    features_split_widths = np.load(join(project_root, 'features_split_widths_' + str(set_type) + '.npy'))
 
     feature_matrix = []
+    widths = []
+    ware_house = WareHouse(project_root)
     for feature_id in features:
         row = []
+        widths.append(features_split_widths[feature_id].tolist())
+        bins = features_split_values[feature_id]
         for i in range(size):
-            instance_ids = []  # get by cluster_ids[i] and cluster_classes[i]
-            # TODO get instance ids for a tuple (cluster_id, cluster_class):
-            bins = features_split_values[feature_id]
+            instance_ids = ware_house.get_instances_by_cluster(set_type, class_id, cluster_classes[i], cluster_ids[i])
             feature_values = [feature_raw[instance_id][feature_id] for instance_id in instance_ids]
             distribution = get_feature_distribution(feature_values, bins)
             row.append(distribution)
         feature_matrix.append(row)
     return jsonify({
         'feature_matrix': feature_matrix,
-        'feature_widths': features_split_widths.tolist()
+        'feature_widths': widths
     })
 
 
 # add by Shouxing, 2017 / 7 / 20
 @app.route('/api/feature_matrix_for_class', methods=['GET'])
 def get_feature_matrix_for_class():
+    total = time.time()
     class_id = json.loads(request.args.get('class_id'))
     features = json.loads(request.args.get('features'))
-    # TODO get matrix of instances and features: feature_raw
-    feature_raw = np.array([[0]])
-    # TODO get labels of instances: instance_labels
-    instance_labels = np.array([0])
-    # TODO get the directory path
-    features_split_values = np.load('features_split_values.npy')
-    features_split_widths = np.load('features_split_widths.npy')
+    set_type = json.loads(request.args.get('set_type'))
+    current_module = sys.modules[__name__]
+    project_root = os.path.dirname(current_module.__file__)
+    project_root = join(project_root, 'result', 'result-test')
+    feature_raw_info = np.load(join(project_root, 'feature-raw-' + str(set_type) + '.npy'))
+    feature_raw = feature_raw_info.tolist()['X']
+    instance_labels = feature_raw_info.tolist()['y']
+    features_split_values = np.load(join(project_root, 'features_split_values_' + str(set_type) + '.npy'))
+    features_split_widths = np.load(join(project_root, 'features_split_widths_' + str(set_type) + '.npy'))
     size = len(instance_labels)
     class_instance_ids = [[],[]]
     for i in range(size):
@@ -91,18 +102,25 @@ def get_feature_matrix_for_class():
             class_instance_ids[1].append(i)
 
     feature_matrix = []
+    widths = []
+    get_distribution = 0
+    count = 0
     for feature_id in features:
+        bins = features_split_values[feature_id]
+        widths.append(features_split_widths[feature_id].tolist())
         row = []
         for i in range(2):
-            instance_ids = class_instance_ids[i]
-            bins = features_split_values[feature_id]
-            feature_values = [feature_raw[instance_id][feature_id] for instance_id in instance_ids]
+            feature_values = [feature_raw[instance_id][feature_id] for instance_id in class_instance_ids[i]]
+            get_distribution -= time.time()
             distribution = get_feature_distribution(feature_values, bins)
+            get_distribution += time.time()
             row.append(distribution)
         feature_matrix.append(row)
+    print('total', 'get_distribution')
+    print(float(time.time() - total), float(get_distribution), count)
     return jsonify({
         'feature_matrix': feature_matrix,
-        'feature_widths': features_split_widths.tolist()
+        'feature_widths': widths
     })
 
 # add by Shouxing, 2017 / 7 / 20
@@ -110,10 +128,13 @@ def get_feature_matrix_for_class():
 def get_bin_exist_for_instance():
     instance_id = json.loads(request.args.get('instance_id'))
     features = json.loads(request.args.get('features'))
-    # TODO get matrix of instances and features: feature_raw
-    feature_raw = np.array([[0]])
-    # TODO get the directory path
-    features_split_values = np.load('features_split_values.npy')
+    set_type = json.loads(request.args.get('set_type'))
+    current_module = sys.modules[__name__]
+    project_root = os.path.dirname(current_module.__file__)
+    project_root = join(project_root, 'result', 'result-test')
+    feature_raw_info = np.load(join(project_root, 'feature-raw-' + str(set_type) + '.npy'))
+    feature_raw = feature_raw_info.tolist()['X']
+    features_split_values = np.load(join(project_root, 'features_split_values_' + str(set_type) + '.npy'))
 
     bins_instance = []
     for feature_id in features:
