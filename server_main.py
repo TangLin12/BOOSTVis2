@@ -2,42 +2,39 @@ from flask import Flask, jsonify
 import numpy as np
 import configparser
 from scripts.algorithm import *
-from os import getcwd, makedirs
+from os import getcwd, makedirs, listdir
 
 import json
 from os.path import join, exists
 import math
 from os import getcwd
 from os.path import join
+from warehouse import WareHouse
 
 import gc
 
 from scripts.clustering import performClustering
 
-HTML_ROOT = getcwd()
+SERVER_ROOT = getcwd()
+warehouse = None
 
 app = Flask(__name__, static_url_path="/static")
 
 POSTERIOR_SPLIT_SIZE = 10
-from flask import after_this_request, request
+from flask import request
 
 TREE_ALL_DATA = {}
-from time import gmtime, strftime
 
+def init_warehouse(dataset):
+    global warehouse
+    warehouse = WareHouse(dataset, join(SERVER_ROOT, "result", dataset))
 
-import struct
-from numpy import array
-
-
-@app.route('/api/confusion_matrix', methods=['GET'])
+@app.route('/api/confusion-matrix', methods=['GET'])
 def get_confusion_matrix():
     dataset_identifier = request.args["dataset"]
-    type = int(request.args["is_train"])
-    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
-    if type:
-        confusion_matrix = np.load(join(dataset_path, "confusion_matrix_train.npy"))
-    else:
-        confusion_matrix = np.load(join(dataset_path, "confusion_matrix_test.npy"))
+    setname = request.args["setname"]
+    dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
+    confusion_matrix = np.load(join(dataset_path, "confusion_matrix_" + setname + ".npy"))
     return jsonify(confusion_matrix.tolist())
 
 # add by Shouxing, 2017 / 7 / 20
@@ -69,19 +66,22 @@ def get_feature_matrix_for_cluster():
         'feature_widths': features_split_widths.tolist()
     })
 
-
 # add by Shouxing, 2017 / 7 / 20
 @app.route('/api/feature_matrix_for_class', methods=['GET'])
 def get_feature_matrix_for_class():
-    class_id = json.loads(request.args.get('class_id'))
-    features = json.loads(request.args.get('features'))
-    # TODO get matrix of instances and features: feature_raw
-    feature_raw = np.array([[0]])
-    # TODO get labels of instances: instance_labels
-    instance_labels = np.array([0])
-    # TODO get the directory path
-    features_split_values = np.load('features_split_values.npy')
-    features_split_widths = np.load('features_split_widths.npy')
+    dataset_identifier = request.args["dataset"]
+    setname = request.args["setname"]
+    class_id = json.loads(request.args['class_id'])
+    features = json.loads(request.args['features'])
+    # features = [int(f) for f in features.split("-")]
+    global warehouse
+    print(warehouse)
+
+    dataset_path = join(SERVER_ROOT, "result", dataset_identifier)
+    feature_raw = np.load(join(dataset_path, "feature-raw-" + setname + ".npy"))
+    instance_labels = np.load(join(dataset_path, "label-" + setname + ".npy"))
+    features_split_values = np.load(join(SERVER_ROOT, "result", dataset_identifier, "features_split_values.npy"))
+    features_split_widths = np.load(join(SERVER_ROOT, "result", dataset_identifier, "features_split_widths.npy"))
     size = len(instance_labels)
     class_instance_ids = [[],[]]
     for i in range(size):
@@ -125,29 +125,27 @@ def get_bin_exist_for_instance():
         'bins_instance': bins_instance
     })
 
-@app.route('/api/feature-importance-tree-size', methods=['GET'])
-def get_feature_importance_tree_size():
+@app.route("/api/feature-importance", methods=["GET"])
+def get_feature_importance():
     dataset_identifier = request.args["dataset"]
-    # type = int(request.args["is_train"])
-    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+    dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
+    return send_file(join(dataset_path, "feature_importance.bin"))
 
-    with open(join(dataset_path, "importance_and_size.txt")) as file:
-        return file.read()
-
+@app.route("/api/tree-size", methods=["GET"])
+def get_tree_size():
+    dataset_identifier = request.args["dataset"]
+    dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
+    return send_file(join(dataset_path, "tree_size.bin"))
 
 @app.route('/api/manifest', methods=['GET'])
 def get_manifest():
     dataset_identifier = request.args["dataset"]
-    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
-    config = configparser.ConfigParser()
-    config.read(join(dataset_path, "manifest"))
-    setting_tuples = config.items("DEFAULT")
-    manifest = {}
-    for t in setting_tuples:
-        k, v = t
-        manifest[k] = v
-    return jsonify(manifest)
-
+    dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
+    global warehouse
+    if warehouse is None or warehouse.identifier is not dataset_identifier:
+        warehouse = WareHouse(dataset_identifier, dataset_path)
+    with open(join(dataset_path, "manifest")) as manifest_file:
+        return manifest_file.read()
 
 import time
 
@@ -156,7 +154,7 @@ import time
 def get_raw_feature_zipped():
     dataset_identifier = request.args["dataset"]
     dataset = dataset_identifier.split("-")[1]
-    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+    dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
     type = int(request.args["is_train"])
     if type:
         return send_file(join(dataset_path, "feature-raw.zip"))
@@ -170,7 +168,7 @@ from flask import send_file
 def get_predicted_label():
     dataset_identifier = request.args["dataset"]
     type = int(request.args["is_train"])
-    root = join(*[HTML_ROOT, "result", dataset_identifier])
+    root = join(*[SERVER_ROOT, "result", dataset_identifier])
     l = np.loadtxt(join(root, "predicted-label-" + ("train" if type else "test")), dtype=np.int16)
     return jsonify(l.tolist())
 
@@ -181,11 +179,11 @@ def get_posterior_by_class():
     dataset_identifier = request.args["dataset"]
     type = int(request.args["is_train"])
     class_ = request.args["class_"]
-    root = join(*[HTML_ROOT, "result", dataset_identifier])
+    root = join(*[SERVER_ROOT, "result", dataset_identifier])
     if type:
-        dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "posteriors-train"])
+        dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier, "posteriors-train"])
     else:
-        dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "posteriors-test"])
+        dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier, "posteriors-test"])
     return send_file(dataset_path + "-" + class_)
 
 #add by Changjian, 2017/7/14
@@ -196,11 +194,11 @@ def get_clustering_by_class():
     dataset_identifier = request.args['dataset']
     type = int( request.args["is_train"])
     class_ = request.args["class_"]
-    root = join( *[HTML_ROOT, "result", dataset_identifier])
+    root = join(*[SERVER_ROOT, "result", dataset_identifier])
     if type:
-        dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "clustering","train"])
+        dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier, "clustering", "train"])
     else:
-        dataset_path = join(*[HTML_ROOT, "result", dataset_identifier, "clustering","test"])
+        dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier, "clustering", "test"])
     return send_file(dataset_path + "-" + class_)
 
 #add by Changjian, 2017/7/14
@@ -223,7 +221,7 @@ def get_classifier():
     global TREE_ALL_DATA
     if dataset_identifier not in TREE_ALL_DATA:
         TREE_ALL_DATA = {}
-        dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+        dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
         print(dataset_path)
         with open(join(dataset_path, "tree-shortened.json")) as json_file:
             TREE_ALL_DATA[dataset_identifier] = json.loads(json_file.read())
@@ -240,7 +238,7 @@ def get_classifier():
 def get_raw_model_iteration():
     # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     dataset_identifier = request.args["dataset"]
-    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+    dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
     iteration = int(request.args["index"])
     with open(join(dataset_path, "model")) as model_file:
         in_block = False
@@ -259,7 +257,7 @@ def get_raw_model_iteration():
 def get_classifier_clustering_result():
     # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     dataset_identifier = request.args["dataset"]
-    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+    dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
     if not exists(join(dataset_path, "cluster_result_all.json")):
         return ""
     with open(join(dataset_path, "cluster_result_all.json")) as result_file:
@@ -272,7 +270,7 @@ def get_classifier_set():
     dataset_identifier = request.args["dataset"]
     # index = int(request.args["index"])
     index = [int(e) for e in request.args["index"].split("-")]
-    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+    dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
     # with open(join(dataset_path, "tree-shortened.json")) as json_file:
     #     all = json.loads(json_file.read())
     global TREE_ALL_DATA
@@ -281,7 +279,7 @@ def get_classifier_set():
         for key in TREE_ALL_DATA:
             del TREE_ALL_DATA[key]
         gc.collect()
-        dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+        dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
         with open(join(dataset_path, "tree-shortened.json")) as json_file:
             TREE_ALL_DATA[dataset_identifier] = json.loads(json_file.read())
         print(dataset_identifier, "tree loaded")
@@ -300,7 +298,7 @@ def get_classifier_set():
 def get_raw_model_iterations():
     # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     dataset_identifier = request.args["dataset"]
-    dataset_path = join(*[HTML_ROOT, "result", dataset_identifier])
+    dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
     iterations = [int(e) for e in request.args["index"].split("-")]
     with open(join(dataset_path, "model")) as model_file:
         lines = model_file.readlines()
@@ -318,14 +316,35 @@ def get_raw_model_iterations():
             results.append("".join(result))
         return "|".join(results)
 
-@app.before_request
-def logging():
-    app.logger.info(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+@app.route('/api/query-dataset', methods=['GET'])
+def query_tag_names():
+    datasets = listdir(join(SERVER_ROOT, "result"))
+    return jsonify(datasets)
 
-import logging
-from logging import FileHandler
+@app.route('/api/query-set-names', methods=['GET'])
+def query_set_names():
+    dataset_identifier = request.args["dataset"]
+    manifest_path = join(SERVER_ROOT, "result", dataset_identifier, "manifest")
+    if not exists(manifest_path):
+        return jsonify({
+            "message": "not exists",
+            "status": "failure"
+        })
+    with open(manifest_path) as manifest_file:
+        manifest = json.load(manifest_file)
+        return jsonify({
+            "status": "success",
+            "set_names": manifest["set_names"]
+        })
+
+@app.route('/api/cluster-result', methods=['GET'])
+def get_cluster_result():
+    dataset_identifier = request.args["dataset"]
+    setname = request.args["setname"]
+    cluster_result_path = join(SERVER_ROOT, "result", dataset_identifier, "clustering_result_" + setname + ".json")
+    return send_file(cluster_result_path)
 
 if __name__ == '__main__':
     start = time.time()
-    root = join(*[HTML_ROOT, "result"])
+    root = join(*[SERVER_ROOT, "result"])
     app.run(port=8083, host="0.0.0.0", threaded=True)

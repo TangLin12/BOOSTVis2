@@ -38,66 +38,75 @@ def save_binary(nd_data, path, type='float32'):
 	array(nd_data.flatten(), type).tofile(path)
 	return
 
+def softmax(z):
+	assert len(z.shape) == 2
+	s = np.max(z, axis=1)
+	s = s[:, np.newaxis] # necessary step to do broadcasting
+	e_x = np.exp(z - s)
+	div = np.sum(e_x, axis=1)
+	div = div[:, np.newaxis] # dito
+	return e_x / div
+
 def create_folder(d):
 	if not exists(d):
 		makedirs(d)
 
-		def instance_clustering(self, set_name, timepoints, set, decision):
-			y = set["y"]
-			X = set["X"]
-			data_count = X.shape[0]
-			scores = np.zeros(shape=(len(timepoints), data_count, self.class_count))
-			for i, t in enumerate(timepoints):
-				scores[i] = np.load(
-					join(self.data_root, set_name + "-prediction-score", "iteration-" + str(t) + ".npy"))
-			print(scores.shape)
-			scores = np.swapaxes(scores, 1, 0)
-			# scores_flatten = scores.reshape(data_count, -1)
-			clustering_result = {}
-			for i in range(self.class_count):
-				res = []
-				K = []
-				clusters = []
-				lines = []
-				prob = []
-				for j in range(self.class_count):
-					instance_index_j = []
-					for index in range(data_count):
-						if y[index] == j and decision[index] == i:
-							instance_index_j.append(index)
-					k = 5
+def instance_clustering(self, set_name, timepoints, set, decision):
+	y = set["y"]
+	X = set["X"]
+	data_count = X.shape[0]
+	scores = np.zeros(shape=(len(timepoints), data_count, self.class_count))
+	for i, t in enumerate(timepoints):
+		scores[i] = np.load(
+			join(self.data_root, set_name + "-prediction-score", "iteration-" + str(t) + ".npy"))
+	print(scores.shape)
+	scores = np.swapaxes(scores, 1, 0)
+	# scores_flatten = scores.reshape(data_count, -1)
+	clustering_result = {}
+	for i in range(self.class_count):
+		res = []
+		K = []
+		clusters = []
+		lines = []
+		prob = []
+		for j in range(self.class_count):
+			instance_index_j = []
+			for index in range(data_count):
+				if y[index] == j and decision[index] == i:
+					instance_index_j.append(index)
+			k = 5
 
-					if len(instance_index_j) < 50:
-						k = 1
+			if len(instance_index_j) < 50:
+				k = 1
 
-					centroids, labels, cluster_size = clustering.kmeans_clustering(scores[instance_index_j, :, i], k)
-					res.append({
-						"centroids": centroids,
-						"cluster_size": cluster_size,
-						"inst_cluster": labels
-					})
-					K.append(k)
-					clusters_by_class = []
-					line_by_class = []
-					prob_by_class = []
-					for c in range(len(centroids)):
-						cluster_instance_index = np.array(instance_index_j)[np.array(labels) == c]
-						clusters_by_class.append(cluster_instance_index.tolist())
-						line_by_class = np.mean(scores[cluster_instance_index][:, :, i], axis=0)
-						prob_by_class.append(line_by_class[-1])
-					clusters.append(clusters_by_class)
-					lines.append(line_by_class.tolist())
-					prob.append(prob_by_class)
+			centroids, labels, cluster_size = clustering.kmeans_clustering(scores[instance_index_j, :, i], k)
+			res.append({
+				"centroids": centroids,
+				"cluster_size": cluster_size,
+				"inst_cluster": labels
+			})
+			K.append(k)
+			clusters_by_class = []
+			line_by_class = []
+			prob_by_class = []
+			for c in range(len(centroids)):
+				cluster_instance_index = np.array(instance_index_j)[np.array(labels) == c]
+				clusters_by_class.append(cluster_instance_index.tolist())
+				line_by_class = np.mean(scores[cluster_instance_index][:, :, i], axis=0)
+				prob_by_class.append(line_by_class[-1])
+			clusters.append(clusters_by_class)
+			lines.append(line_by_class.tolist())
+			prob.append(prob_by_class)
 
-				clustering_result[i] = {
-					"res": res,
-					"K": K,
-					"clusters": clusters,
-					"lines": lines,
-					"prob": prob
-				}
+		clustering_result[i] = {
+			"res": res,
+			"K": K,
+			"clusters": clusters,
+			"lines": lines,
+			"prob": prob
+		}
 
-			save_json(clustering_result, join(self.data_root, "clustering_result_" + set_name + ".json"))
+	save_json(clustering_result, join(self.data_root, "clustering_result_" + set_name + ".json"))
 
 
 if __name__ == '__main__':

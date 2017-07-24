@@ -10,14 +10,7 @@ function FeatureMatrix(container) {
     that.width = bbox.width;
     that.height = bbox.height;
 
-    //if (that.container.children) {
-    //    that.container.children.remove();
-    //}
     that.container.select("canvas").remove();
-    //that.container
-    //    .transition()
-    //    .duration(500)
-    //    .style("opacity", 0);
     that.scale = 1;
     this.fh_canvas = this.container.append("canvas")
         .attr("width", that.width * that.scale)
@@ -138,7 +131,9 @@ FeatureMatrix.prototype.update_bin_format_for_cluster = function () {
 FeatureMatrix.prototype.update_bin_format = function () {
     $.getJSON('/api/feature_matrix_for_class', {
             class_id: JSON.stringify(get_current_focused_class()),
-            features: JSON.stringify(feature_matrix.features)
+            features: JSON.stringify(feature_matrix.features),
+            dataset: DATASET,
+            setname: SETNAME
         }, function(data) {
             console.log(data);
             feature_matrix.binMatrix = data.feature_matrix;
@@ -178,7 +173,7 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
 
     var bin_matrix = that.binMatrix;
     var bin_widths = that.binWidths;
-
+    console.log(bin_widths);
     var features = that.features;
     var feature_number = features.length;
     var start = that.featureStart;
