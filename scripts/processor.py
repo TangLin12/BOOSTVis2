@@ -21,7 +21,7 @@ class AbstractProcessor(ABC):
     # meta data
     class_count = 0
     data_count = 0
-    iteration_count =  0
+    iteration_count = 0
     class_label = []
     feature_count = 0
     endpoints_train = []
@@ -66,7 +66,7 @@ class AbstractProcessor(ABC):
         return confusion_matrix(true_label, decision)
 
     # add by Shouxing, 2017 / 7 / 20
-    def pre_split_features(self, feature_raw: np.array, bin_count: int):
+    def pre_split_features(self, feature_raw: np.array, bin_count: int, set_name):
         '''This function generates split values of all features, given a count of bins.
 
         :param feature_raw: n-d array of feature values, n is number of instances and d is number of features.
@@ -81,8 +81,8 @@ class AbstractProcessor(ABC):
             dic = algorithm.split_feature(x, bin_count)
             bin_values.append(dic['bin_value'])
             bin_widths.append(dic['bin_width'])
-        np.save(join(self.data_root, 'features_split_values'), np.array(bin_values))
-        np.save(join(self.data_root, 'features_split_widths'), np.array(bin_widths))
+        np.save(join(self.data_root, 'features_split_values_' + str(set_name)), np.array(bin_values))
+        np.save(join(self.data_root, 'features_split_widths_' + str(set_name)), np.array(bin_widths))
 
     def get_prediction_score(self, set_name, data_count, class_count, timepoints):
         scores = np.zeros(shape=(len(timepoints), data_count, class_count))
@@ -123,6 +123,7 @@ class AbstractProcessor(ABC):
             decision_last_iteration
         )
         helper.save_json(cluster_result, join(self.data_root, "clustering_result_" + set_name + ".json"))
+        self.pre_split_features(set["X"], config.FEATURE_BIN_COUNT, set_name)
         self.pre_split_features(set["X"], config.FEATURE_BIN_COUNT)
 
         np.save(join(self.data_root, "feature-raw-" + set_name + ".npy"), set["X"])

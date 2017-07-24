@@ -127,9 +127,9 @@ def clustering( focused_class, type, dataset_identifier, clustering_all_instance
 		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-train')
 		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, 'clustering/train-' + str(focused_class) )
 	else:
-		posteriorPath = os.path.join( RESULT_ROOT, dataset_identifier, 'posteriors-tests-' + str(focused_class) )
+		posteriorPath = os.path.join( RESULT_ROOT, dataset_identifier, 'posteriors-test-' + str(focused_class) )
 		trueLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'testing_label')
-		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-tests')
+		predictedLabelPath = os.path.join( RESULT_ROOT, dataset_identifier, 'predicted-label-test')
 		outFilePath = os.path.join( RESULT_ROOT, dataset_identifier, 'clustering/tests-' + str(focused_class) )
 	true_labels = loadTrueLabel( trueLabelPath )
 	predicted_label = loadPredictedLabel( predictedLabelPath )

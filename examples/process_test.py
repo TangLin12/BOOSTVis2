@@ -3,6 +3,45 @@ from os.path import join
 import pandas as pd
 import os
 from scripts import processor
+import pandas as pd
+import os
+from os.path import join
+from sklearn.model_selection import StratifiedShuffleSplit
+
+def load_otto():
+	dataset_path = join(os.getcwd(), 'Otto')
+	converter = {
+		"target": lambda x: int(x.replace("Class_", "")) - 1
+	}
+	use_cols = ["feat_" + str(i) for i in range(1, 94)]
+	use_cols.append("target")
+	full = pd.read_csv(join(dataset_path, "train.csv"), sep=',', converters=converter, usecols=use_cols)
+
+	full_mat = full.as_matrix()
+
+	y = full_mat[:, -1]
+
+	X = full_mat[:, 0:-1]
+
+	sampling_ratio = 0.8
+	sss = StratifiedShuffleSplit(n_splits=1, train_size=sampling_ratio, test_size=1 - sampling_ratio,
+								 random_state=1224)
+	for train_index, test_index in sss.split(X, y):
+		X_train = X[train_index]
+		y_train = y[train_index]
+		X_test = X[test_index]
+		y_test = y[test_index]
+
+		return {
+				"train": {
+					"X": X_train,
+					"y": y_train
+				},
+				"valid": {
+					"X": X_test,
+					"y": y_test
+				}
+		}
 
 from sklearn.model_selection import StratifiedShuffleSplit
 
@@ -66,7 +105,7 @@ def load_otto():
 
 
 def LightGBMTest():
-	dataset = load_otto()
+	dataset = load_toy1()
 	lgb_train = lgb.Dataset(dataset["train"]["X"], dataset["train"]["y"])
 	lgb_valid = lgb.Dataset(dataset["valid"]["X"], dataset["valid"]["y"])
 
@@ -77,14 +116,14 @@ def LightGBMTest():
 		'boosting_type': 'gbdt',
 		'objective': 'multiclass',
 		'metric': 'mlogloss',
-		'num_leaves': 128,
+		'num_leaves': 31,
 		'learning_rate': 0.05,
 		'feature_fraction': 0.9,
 		'bagging_fraction': 0.8,
 		'bagging_freq': 5,
 		'verbose': 0,
-		'num_boost_round': 400,
-		'num_class': 9
+		'num_boost_round': 100,
+		'num_class': 5
 	}
 
 	booster = lgb.train(params,
@@ -95,11 +134,8 @@ def LightGBMTest():
 				categorical_feature=[21])
 	p = processor.LightGBMProcess(booster, dataset["train"], {
 		"valid_1": dataset["valid"]
-	}, params, join("..", "result", "otto-demo"))
-	import time
-	start = time.time()
+	}, params, join("..","result", "result-test"))
 	p.process()
-	print(time.time() - start)
 
 
 if __name__ == '__main__':
