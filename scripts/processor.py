@@ -1,9 +1,10 @@
 import numpy as np
-import json
+import time
 import math
 from os.path import join, exists
 from scripts import algorithm
 from scripts import config
+import server
 
 from sklearn.metrics import confusion_matrix
 from scripts import helper
@@ -88,7 +89,6 @@ class AbstractProcessor(ABC):
         scores = np.zeros(shape=(len(timepoints), data_count, class_count))
         for i, t in enumerate(timepoints):
             scores[i] = np.load(join(self.data_root, set_name + "-prediction-score", "iteration-" + str(t) + ".npy"))
-        print(scores.shape)
         return np.swapaxes(scores, 1, 0)
 
     def calculate_prediction_score_all_iterations(self, data, model, class_count, iteration):
@@ -98,6 +98,7 @@ class AbstractProcessor(ABC):
         pass
 
     def process_dataset(self, set, set_name):
+        start = time.time()
         set_root = join(self.data_root, set_name + "-prediction-score")
         helper.create_folder(set_root)
         data_count = set["X"].shape[0]
@@ -124,12 +125,12 @@ class AbstractProcessor(ABC):
         )
         helper.save_json(cluster_result, join(self.data_root, "clustering_result_" + set_name + ".json"))
         self.pre_split_features(set["X"], config.FEATURE_BIN_COUNT, set_name)
-        self.pre_split_features(set["X"], config.FEATURE_BIN_COUNT)
 
         np.save(join(self.data_root, "feature-raw-" + set_name + ".npy"), set["X"])
         np.save(join(self.data_root, "label-" + set_name + ".npy"), set["y"])
         np.save(join(self.data_root, "confusion_matrix_" + set_name + ".npy"), confusion_matrices)
 
+        print("process dataset\t", time.time() - start)
         return confusion_matrices, key_timepoints
 
     def process(self):
@@ -148,10 +149,7 @@ class AbstractProcessor(ABC):
             self.confusion_matrices_valids[valid], self.endpoints_valids[valid] = self.process_dataset(self.valid_sets[valid], valid)
 
         helper.save_json(self.get_manifest(), join(self.data_root, "manifest"))
-
-    def start_server(self):
-        # TODO
-        pass
+        server.start_server()
 
 class LightGBMProcess(AbstractProcessor):
     def __init__(self, m, train, valids, params, data_root):
@@ -210,9 +208,7 @@ class LightGBMProcess(AbstractProcessor):
             "tree_size": tree_size
         }
 
-
     def calculate_prediction_score_all_iterations(self, data, model, class_count, iteration):
-        import time
         start = time.time()
         leaf_ids = model.predict(data, pred_leaf=True)
         leaf_id_max = np.max(leaf_ids, axis=0) # iteration * class_count
@@ -233,7 +229,7 @@ class LightGBMProcess(AbstractProcessor):
                     scores_all_iterations[i][tree_id] = leaf_values[tree_id][leaf_ids[i][tree_id]]
 
         print(scores_all_iterations.shape)
-        print(time.time() - start)
+        print("calculating prediction scores", time.time() - start)
         return scores_all_iterations
 
     def predict(self, data, num_iteration):

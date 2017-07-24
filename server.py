@@ -1,23 +1,18 @@
 from flask import Flask, jsonify
-import numpy as np
-import configparser
-from scripts.algorithm import *
-from os import getcwd, makedirs, listdir
-
 import json
+from os import listdir
 from os.path import join, exists
-import math
 from os import getcwd
 from os.path import join
+import webbrowser
+
+from scripts.config import *
+from scripts.algorithm import *
 from warehouse import WareHouse
-
-import gc
-
 from scripts.clustering import performClustering
 
 SERVER_ROOT = getcwd()
 warehouse = None
-
 app = Flask(__name__, static_url_path="/static")
 
 POSTERIOR_SPLIT_SIZE = 10
@@ -73,9 +68,6 @@ def get_feature_matrix_for_class():
     setname = request.args["setname"]
     class_id = json.loads(request.args['class_id'])
     features = json.loads(request.args['features'])
-    # features = [int(f) for f in features.split("-")]
-    global warehouse
-    print(warehouse)
 
     dataset_path = join(SERVER_ROOT, "result", dataset_identifier)
     feature_raw = np.load(join(dataset_path, "feature-raw-" + setname + ".npy"))
@@ -255,7 +247,6 @@ def get_raw_model_iteration():
 # add by Changjian, 2017/7/18
 @app.route("/api/classifier-clustering-result", methods=['GET'])
 def get_classifier_clustering_result():
-    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     dataset_identifier = request.args["dataset"]
     dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
     if not exists(join(dataset_path, "cluster_result_all.json")):
@@ -266,19 +257,13 @@ def get_classifier_clustering_result():
 # add by Changjian, 2017/7/18
 @app.route('/api/get-classifiers-set', methods=['GET'])
 def get_classifier_set():
-    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     dataset_identifier = request.args["dataset"]
-    # index = int(request.args["index"])
     index = [int(e) for e in request.args["index"].split("-")]
-    dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
-    # with open(join(dataset_path, "tree-shortened.json")) as json_file:
-    #     all = json.loads(json_file.read())
     global TREE_ALL_DATA
     if dataset_identifier not in TREE_ALL_DATA:
         TREE_ALL_DATA = {}
         for key in TREE_ALL_DATA:
             del TREE_ALL_DATA[key]
-        gc.collect()
         dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
         with open(join(dataset_path, "tree-shortened.json")) as json_file:
             TREE_ALL_DATA[dataset_identifier] = json.loads(json_file.read())
@@ -296,7 +281,6 @@ def get_classifier_set():
 # add by Changjian, 2017/7/18
 @app.route('/api/model-raw-indices', methods=['GET'])
 def get_raw_model_iterations():
-    # print(request.remote_addr + "\t" + request.url + "\t" + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     dataset_identifier = request.args["dataset"]
     dataset_path = join(*[SERVER_ROOT, "result", dataset_identifier])
     iterations = [int(e) for e in request.args["index"].split("-")]
@@ -344,7 +328,9 @@ def get_cluster_result():
     cluster_result_path = join(SERVER_ROOT, "result", dataset_identifier, "clustering_result_" + setname + ".json")
     return send_file(cluster_result_path)
 
+def start_server(port=API_SERVER_PORT):
+    webbrowser.open("http://localhost:" + str(port) + "/static/index.html", autoraise=True)
+    app.run(port=port, host="0.0.0.0", threaded=True)
+
 if __name__ == '__main__':
-    start = time.time()
-    root = join(*[SERVER_ROOT, "result"])
-    app.run(port=8083, host="0.0.0.0", threaded=True)
+    start_server()

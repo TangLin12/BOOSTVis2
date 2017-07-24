@@ -102,8 +102,6 @@ def load_otto():
 			}
 		}
 
-
-
 def LightGBMTest():
 	dataset = load_toy1()
 	lgb_train = lgb.Dataset(dataset["train"]["X"], dataset["train"]["y"])
@@ -122,7 +120,7 @@ def LightGBMTest():
 		'bagging_fraction': 0.8,
 		'bagging_freq': 5,
 		'verbose': 0,
-		'num_boost_round': 100,
+		'num_boost_round': 20,
 		'num_class': 5
 	}
 
@@ -134,7 +132,7 @@ def LightGBMTest():
 				categorical_feature=[21])
 	p = processor.LightGBMProcess(booster, dataset["train"], {
 		"valid_1": dataset["valid"]
-	}, params, join("..","result", "result-test"))
+	}, params, join("..","result", "result-demo"))
 	p.process()
 
 

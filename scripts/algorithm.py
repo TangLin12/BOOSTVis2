@@ -1,22 +1,55 @@
 import numpy as np
-import math
+import time
+import sys
 
+def get_segment_cost(vectors, L, R):
+	l = len(vectors[L])
+	avg_vec = np.mean(vectors[L: R, :], axis=0)
+
+	cost = 0
+	for i in range(L, R + 1):
+		delta = vectors[i, :] - avg_vec
+		cost += np.sum(np.square((delta)))
+
+	return cost
 
 def time_series_segmentation(confusion_matrics, segment_count):
-	# TODO
-	timepoint_count = len(confusion_matrics)
-	segment_count = min(segment_count, timepoint_count)
-	stride = math.ceil(timepoint_count / segment_count)
-	segment = np.arange(timepoint_count)[::stride]
-	segment[-1] = timepoint_count - 1
-	return segment.tolist()
+	iteration_count = len(confusion_matrics)
+	vectors = np.reshape(confusion_matrics, newshape=(iteration_count, -1))
+	f = np.zeros(shape=(iteration_count, segment_count), dtype=np.float32)
+	g = np.zeros(shape=(iteration_count, segment_count), dtype=np.int32)
+	cost = np.zeros(shape=(iteration_count, iteration_count), dtype=np.float32)
 
+	start = time.time()
+	for i in range(iteration_count):
+		cost[i][i] = 0
+		for j in range(i + 1, iteration_count):
+			cost[i][j] = get_segment_cost(vectors, i, j)
 
-# using k-means clustering
-def cluster_instance(prediction_scores, k):
-	# TODO
-	return {}
+	print("segmentation cost:\t", time.time() - start)
 
+	for i in range(iteration_count):
+		f[i][0] = cost[0][i]
+		g[i][0] = -1
+
+	for j in range(1, segment_count):
+		for i in range(j - 1, iteration_count):
+			f[i][j] = sys.maxsize
+			for k in range(j - 2, i):
+				if (f[k][j - 1] + cost[k + 1][i] < f[i][j]):
+					f[i][j] = f[k][j - 1] + cost[k + 1][i]
+					g[i][j] = k
+
+	endpoints = []
+	i = np.int32(iteration_count - 1)
+	j = segment_count - 1
+	while i != -1:
+		endpoints.append(i.item())
+		i = g[i][j]
+		j = j - 1
+
+	endpoints = endpoints[::-1]
+	return endpoints
 
 def split_feature(feature_values: np.array, bin_count: int) -> np.array:
 	'''This function generates split values of a given feature, given a count of bins.
@@ -76,7 +109,6 @@ def get_feature_distribution(feature_values: np.array, bins: np.array) -> np.arr
 
     :return: np.array, the histogram of each bin
 	'''
-	# TODO
 	# add by Shouxing, 2017 / 7 / 20
 	size = bins.size
 	histogram = [0] * (size - 1)

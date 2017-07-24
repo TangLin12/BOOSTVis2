@@ -108,6 +108,9 @@ def instance_clustering(self, set_name, timepoints, set, decision):
 
 	save_json(clustering_result, join(self.data_root, "clustering_result_" + set_name + ".json"))
 
+def list_tostring(l):
+	return " ".join([str(e) for e in l])
+
 
 if __name__ == '__main__':
 	a = np.random.rand(30, 3, 100)
