@@ -10,14 +10,7 @@ function FeatureMatrix(container) {
     that.width = bbox.width;
     that.height = bbox.height;
 
-    //if (that.container.children) {
-    //    that.container.children.remove();
-    //}
     that.container.select("canvas").remove();
-    //that.container
-    //    .transition()
-    //    .duration(500)
-    //    .style("opacity", 0);
     that.scale = 1;
     this.fh_canvas = this.container.append("canvas")
         .attr("width", that.width * that.scale)
@@ -139,7 +132,7 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
 
     var bin_matrix = that.binMatrix;
     var bin_widths = that.binWidths;
-
+    console.log(bin_widths);
     var features = that.features;
     var feature_number = features.length;
     var start = that.featureStart;

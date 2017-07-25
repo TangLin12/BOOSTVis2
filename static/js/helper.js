@@ -468,7 +468,7 @@ function save_instance_cluster_result_all () {
     for (var i = 0; i < CLASS_COUNT; i ++) {
         all.push(confidence_lines.perform_clustering_on_instances(i));
     }
-    console.save(all, "confidence-lines-cluster-result-" + SETTYPE + ".json");
+    console.save(all, "confidence-lines-cluster-result-" + SETNAME + ".json");
 }
 
 function get_precision_values (square_matrix) {

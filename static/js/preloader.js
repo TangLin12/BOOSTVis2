@@ -20,7 +20,7 @@ PreLoader.prototype.show = function () {
         .transition()
         .duration(200)
         .style("opacity", 1);
-    that.info_header.text("Loading " + (WINDOW_WIDTH < 1204 ? "" : "Progress ") + "(" + DATASET + "-" + SETTYPE + ")");
+    that.info_header.text("Loading " + (WINDOW_WIDTH < 1204 ? "" : "Progress ") + "(" + DATASET + "-" + SETNAME + ")");
     //setTimeout(function () {
     //    that.element.style("display", "block");
     //}, 200);
@@ -49,7 +49,7 @@ PreLoader.prototype.load_instance_timepoint = function(timepoints, that) {
 
         if (!that.cached_timepoints[p]) {
             var task = "/api/tsne-result3-iteration" + "?dataset=" + DATASET + "&is_train=" +
-                (SETTYPE == "train" ? "1" : "0") + "&iteration=" + (focused_timepoint - 3) + "&full=" + 0;
+                (SETNAME == "train" ? "1" : "0") + "&iteration=" + (focused_timepoint - 3) + "&full=" + 0;
             var oReq = new XMLHttpRequest();
             oReq.open("GET", task, true);
             oReq.responseType = "arraybuffer";
