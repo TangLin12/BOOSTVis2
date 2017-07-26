@@ -14,6 +14,7 @@ import webbrowser
 
 from scripts.config import *
 from scripts.algorithm import *
+from scripts.helper import *
 from warehouse import WareHouse
 from scripts.clustering import performClustering
 
@@ -62,10 +63,10 @@ def get_feature_matrix_for_cluster():
 
     feature_matrix = []
     widths = []
-    ware_house = WareHouse(project_root)
+    ware_house = WareHouse(dataset_identifier, project_root)
     for feature_id in features:
         row = []
-        widths.append(features_split_widths[feature_id].tolist())
+        widths.append(features_split_widths[feature_id])
         bins = features_split_values[feature_id]
         for i in range(size):
             instance_ids = ware_house.get_instances_by_cluster(set_type, class_id, cluster_classes[i], cluster_ids[i])
@@ -335,7 +336,7 @@ def get_raw_model_iterations():
 
 @app.route('/api/query-dataset', methods=['GET'])
 def query_tag_names():
-    datasets = listdir(join(SERVER_ROOT, "result"))
+    datasets = listdir_sorted_by_date(join(SERVER_ROOT, "result"))
     return jsonify(datasets)
 
 @app.route('/api/query-set-names', methods=['GET'])
@@ -362,7 +363,8 @@ def get_cluster_result():
     return send_file(cluster_result_path)
 
 def start_server(port=API_SERVER_PORT):
-    webbrowser.open("http://localhost:" + str(port) + "/static/index.html", autoraise=True)
+    if not DEBUG:
+        webbrowser.open("http://localhost:" + str(port) + "/static/index.html", autoraise=True)
     app.run(port=port, host="0.0.0.0", threaded=True)
 
 if __name__ == '__main__':

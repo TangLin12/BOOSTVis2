@@ -118,7 +118,6 @@ class AbstractProcessor(ABC):
         scores = self.get_prediction_score(set_name, data_count, self.class_count, key_timepoints)
         decision_last_iteration = helper.prob2decision(prediction_score)
         cluster_result = clustering.instance_clustering(
-            self.class_count,
             scores,
             set,
             decision_last_iteration
@@ -175,6 +174,8 @@ class LightGBMProcess(AbstractProcessor):
         cur_iteration = 0
         is_metadata = True
         features = None
+        feature_gain = None
+        new_tree = False
         while line_pos < len(lines):
             # used to skip metadata
             line = lines[line_pos]
@@ -189,18 +190,27 @@ class LightGBMProcess(AbstractProcessor):
                 t = int(t)
                 cur_class = t % class_count
                 cur_iteration = int((t - cur_class) / class_count)
-            elif line.startswith("num_leaves="):
+                new_tree = True
+
+            if not new_tree:
+                line_pos += 1
+                continue
+
+            if line.startswith("num_leaves="):
                 num_leaves = line.replace("num_leaves=", "").replace("\n", "")
-                tree_size[cur_class][cur_iteration] = math.pow(int(num_leaves), 1)
+                tree_size[cur_class][cur_iteration] = int(num_leaves)
             elif line.startswith("split_feature="):
                 features = line.replace("split_feature=", "") \
                     .replace("\n", "").split(" ")
             elif line.startswith("split_gain="):
+
                 feature_gain = line.replace("split_gain=", "").replace("\n", "").split(" ")
-                if feature_gain[-1] != '':
-                    for j, f in enumerate(features):
-                        g = float(feature_gain[j])
-                        feature_gains[cur_class][int(f)] += g / normalizer
+                for j, f in enumerate(features):
+                    if len(f) == 0: # for case: "".split(" ")
+                        continue
+                    g = float(feature_gain[j])
+                    feature_gains[cur_class][int(f)] += g / normalizer
+                new_tree = False
 
             line_pos += 1
         return {

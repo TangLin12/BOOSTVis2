@@ -2,11 +2,6 @@
  * Created by Derek Xiao on 2017/2/8.
  */
 
-var on_timepoint_highlight = function (p) {
-    $("#iteration-indicator").text(p);
-    navigation.on_instance_timepoint_highlight(p);
-};
-
 var show_tree_classifier = function (iteration, class_) {
     class_ = class_ || confidence_lines.focused_class;
     iteration = Math.max(iteration, 0);
@@ -47,15 +42,15 @@ var is_instance_mode = function () {
                     && confidence_lines.mode == confidence_lines.instanceMode);
 };
 
-var get_current_focused_class = function () {
-    return confidence_lines.focused_class;
-};
-
 var tree_list_highlight = function (tree_index, class_) {
     if (!USING_CLASSIFIER) {
         return;
     }
     tree_list.highlight_representative_tree(tree_index, class_);
+};
+
+var get_current_focused_class = function () {
+    return confidence_lines.focused_class;
 };
 
 var focus_on_class = function (focused_class) {
@@ -64,6 +59,22 @@ var focus_on_class = function (focused_class) {
         tree_list.show_tree_list(focused_class);
     }
     class_selector.highlight_class(confusion_matrix.reverse_ranking[focused_class]);
+};
+
+var confidence_lines_mousedown = function (e) {
+    var loc = windowToCanvas(this, e.clientX, e.clientY);
+    e.preventDefault();
+    confidence_lines.canvas_mousedown(loc, this);
+};
+
+var confidence_lines_mousemove = function (e) {
+    var loc = windowToCanvas(this, e.clientX, e.clientY);
+    e.preventDefault();
+    confidence_lines.canvas_mousemove(loc, this);
+};
+
+var confidence_lines_mouseout = function (e) {
+    confidence_lines.canvas_mouseout();
 };
 
 var click_class = function (label) {
@@ -76,31 +87,6 @@ var click_class = function (label) {
     if (USING_CLASSIFIER) {
         treesize_barchart.render_tree_size_bar_chart(label);
         tree_inspector.clear_clusters();
-    }
-};
-
-var retrieve_posterior = function (class_, callback) {
-    console.log("request posterior", class_);
-    if (POSTERIOR_ALL[class_]) {
-        callback(POSTERIOR_ALL[class_]);
-    } else {
-        var task = "/api/posterior-by-class" + PARAMS + "&class_=" + class_;
-        var oReq = new XMLHttpRequest();
-        oReq.open("GET", task, true);
-        oReq.responseType = "arraybuffer";
-        oReq.setRequestHeader("cache-control", "no-cache");
-
-        oReq.onload = function (oEvent) {
-            var arrayBuffer = oReq.response;
-            if (arrayBuffer) {
-                var byteArray = new Float32Array(arrayBuffer);
-
-                POSTERIOR_ALL[class_] = byteArray;
-
-                callback(POSTERIOR_ALL[class_]);
-            }
-        };
-        oReq.send(null);
     }
 };
 
@@ -160,3 +146,61 @@ function add_options(target, options) {
         select.appendChild(opt);
     }
 }
+
+var show_positive_instances_link = function() {
+    var nodes = tree_inspector.resultTree.baseSvg.selectAll('.node');
+    nodes.each(function(n,i){
+        var node = d3.select(this);
+        var links = node.selectAll("path.restlink");
+        links.style("opacity",function(d,j){
+            if( j != ( n.lineNum_splits.length - 1) ){
+                return 1;
+            }
+            else{
+                return -1;
+            }
+        });
+    });
+};
+
+
+var hide_positive_instance_link = function(){
+    // var nodes = tree_inspector.resultTree.baseSvg.selectAll('.node');
+    // nodes.each(function(n,i){
+    //     var node = d3.select(this);
+    //     var links = node.selectAll("path.restlink");
+    //     links.style("opacity",function(d,j){
+    //         if(  j != ( n.lineNum_splits.length - 1) ) {
+    //             if (n.color_index[j] != n.color_index[n.color_index.length - 1]) {
+    //                 return 0;
+    //             }
+    //             else {
+    //                 return 1;
+    //             }
+    //         }
+    //         else{
+    //             return -1;
+    //         }
+    //     });
+    // });
+    // tree_inspector.resultTree.clearClusters();
+    var focused_class = get_current_focused_class();
+    var split_colors = tree_inspector.resultTree.split_colors;
+    tree_inspector.resultTree.split_colors = [];
+    for( var i = 0; i < split_colors.length; i++ ){
+        if( split_colors[i] != color_manager.get_color(focused_class) ){
+            tree_inspector.resultTree.split_colors.push(split_colors[i]);
+        }
+    }
+    for( var n = 0; n < tree_inspector.resultTree.treeNodeDic.length; n++ ){
+        var tmp_raw_splits = tree_inspector.resultTree.treeNodeDic[n].raw_splits;
+        tree_inspector.resultTree.treeNodeDic[n].raw_splits = [];
+        for( var i = 0; i < split_colors.length; i++ ){
+            if( split_colors[i] != color_manager.get_color(focused_class) ){
+                tree_inspector.resultTree.treeNodeDic[n].raw_splits.push( tmp_raw_splits[i]);
+            }
+        }
+    }
+    tree_inspector.resultTree.applyCluster();
+};
+

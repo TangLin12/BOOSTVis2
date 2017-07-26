@@ -44,6 +44,6 @@ class WareHouse(object):
         instance_ids : list with shape (instance, )
         """
 
-        print(cluster_class, cluster_id)
-        cluster_instance_index = self.cluster_2_instance_map[set_name][str(selected_class)]["clusters"][cluster_id][cluster_class]
+        clusters = self.cluster_2_instance_map[set_name][str(selected_class)]["clusters"]
+        cluster_instance_index = clusters[cluster_class][cluster_id]
         return cluster_instance_index

@@ -1,3 +1,4 @@
+import numpy as np
 import lightgbm as lgb
 from os.path import join
 import pandas as pd
@@ -69,6 +70,7 @@ def load_toy1() -> object:
 
 def LightGBMTest():
 	dataset = load_otto()
+	label = dataset["train"]["y"]
 	lgb_train = lgb.Dataset(dataset["train"]["X"], dataset["train"]["y"])
 	lgb_valid = lgb.Dataset(dataset["valid"]["X"], dataset["valid"]["y"])
 
@@ -86,7 +88,7 @@ def LightGBMTest():
 		'bagging_freq': 5,
 		'verbose': 0,
 		'num_boost_round': 100,
-		'num_class': 9
+		'num_class': len(np.unique(label))
 	}
 
 	booster = lgb.train(params,

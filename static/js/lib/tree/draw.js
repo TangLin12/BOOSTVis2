@@ -30,13 +30,15 @@ var color_origin = ["red", "blue", "green"];
 var thisNode;
 var DrawNode = function (dragListener) {
     var _this = this;
-    this.drawConnectRect = new DrawConnectRect(dragListener);
+    //remove by Changjian, 2017/7/24
+    //this.drawConnectRect = new DrawConnectRect(dragListener);
     this.drawNodeLabel = new DrawNodeLabel(dragListener);
     this.drawHighlightRect = new DrawHighlightRect();
-    this.drawPin = new DrawPin();
-    this.drawDepthNode = new DrawDepthNode();
-    this.drawRestNode = new DrawRestNode(dragListener);
-    this.drawBar = new DrawBar();
+    //remmove by Changjian, 2017/7/24
+    //this.drawPin = new DrawPin();
+    // this.drawDepthNode = new DrawDepthNode();
+    // this.drawRestNode = new DrawRestNode(dragListener);
+    // this.drawBar = new DrawBar();
     this.createNodes = function (nodes) {
         return nodes.enter().append("g")
             .call(dragListener.dragListener)
@@ -81,21 +83,24 @@ var DrawNode = function (dragListener) {
             });
     }
 };
-var DrawConnectRect = function (dragListener) {
-    var _this = this;
-    this.creatRects = function (nodes) {
-        nodes.append("rect")
-            .attr('class', 'ghostCircle')
-            .attr("width", 120)
-            .attr("height", 70)
-            .attr("y", -35)
-            .attr("opacity", 0)
-            .style("fill", "red")
-            .attr('pointer-events', 'mouseover')
-            .on("mouseover", dragListener.overCircle)
-            .on("mouseout", dragListener.outCircle);
-    }
-};
+
+// remove by Changjian, 2017/7/24
+// var DrawConnectRect = function (dragListener) {
+//     var _this = this;
+//     // this.creatRects = function (nodes) {
+//         // nodes.append("rect")
+//         //     .attr('class', 'ghostCircle')
+//         //     .attr("width", 120)
+//         //     .attr("height", 70)
+//         //     .attr("y", -35)
+//         //     .attr("opacity", 0)
+//         //     .style("fill", "red")
+//         //     .attr('pointer-events', 'mouseover')
+//         //     .on("mouseover", dragListener.overCircle)
+//         //     .on("mouseout", dragListener.outCircle);
+//     // }
+// };
+
 var DrawNodeLabel = function (dragListener) {
     var _this = this;
     var start_center_align = -23;
@@ -403,334 +408,340 @@ var DrawHighlightRect = function () {
             });
     };
 };
-var DrawPin = function () {
-    var _this = this;
-    this.createPins = function (nodes, treeCut) {
-        // nodes.append("svg")
-        //     .attr("class", "nodeSvg")
-        //     .append("image")
-        //     .attr("class", "svgIcon")
-        //     .attr("xlink:href", "/static/img/office-push-pin.svg")
-        //     .on("click", function (node) {
-        //         if (d3.select("#node" + node.Id).select(".svgIcon")[0][0]) {
-        //             d3.select("#node" + node.Id).select(".svgIcon").attr("class", "svgIconShow");
-        //             treeCut.pin(node, true);
-        //         } else if (d3.select("#node" + node.Id).select(".svgIconShow")[0][0]) {
-        //             d3.select("#node" + node.Id).select(".svgIconShow").attr("class", "svgIcon");
-        //             treeCut.pin(node, false);
-        //         }
-        //     })
-        //     .on("mouseover", function (node) {
-        //         d3.select("#node" + node.Id).select(".svgIcon").attr("xlink:href", "/static/img/office-push-pin-black.svg");
-        //     })
-        //     .on("mouseout", function (node) {
-        //         d3.select("#node" + node.Id).select(".svgIcon").attr("xlink:href", "/static/img/office-push-pin.svg");
-        //     });
-    }
-    this.updatePins = function (nodes) {
-        // nodes.select("svg.nodeSvg")
-        //     .attr("x", function (d) {
-        //         var text = $("#node" + d.Id + " .nodeText");
-        //         return Number(text.attr("x")) + text.width();
-        //     })
-        //     .attr("y", function (d) {
-        //         var text = $("#node" + d.Id + " .nodeText");
-        //         return -(text.height() / 2) - 4;
-        //     })
-        //     .style("display", function (d) {
-        //         return d.isRest ? "none" : "block";
-        //     });
-    }
-};
+//remove by Changjian, 2017/7/24
+// var DrawPin = function () {
+//     var _this = this;
+//     this.createPins = function (nodes, treeCut) {
+//         // nodes.append("svg")
+//         //     .attr("class", "nodeSvg")
+//         //     .append("image")
+//         //     .attr("class", "svgIcon")
+//         //     .attr("xlink:href", "/static/img/office-push-pin.svg")
+//         //     .on("click", function (node) {
+//         //         if (d3.select("#node" + node.Id).select(".svgIcon")[0][0]) {
+//         //             d3.select("#node" + node.Id).select(".svgIcon").attr("class", "svgIconShow");
+//         //             treeCut.pin(node, true);
+//         //         } else if (d3.select("#node" + node.Id).select(".svgIconShow")[0][0]) {
+//         //             d3.select("#node" + node.Id).select(".svgIconShow").attr("class", "svgIcon");
+//         //             treeCut.pin(node, false);
+//         //         }
+//         //     })
+//         //     .on("mouseover", function (node) {
+//         //         d3.select("#node" + node.Id).select(".svgIcon").attr("xlink:href", "/static/img/office-push-pin-black.svg");
+//         //     })
+//         //     .on("mouseout", function (node) {
+//         //         d3.select("#node" + node.Id).select(".svgIcon").attr("xlink:href", "/static/img/office-push-pin.svg");
+//         //     });
+//     }
+//     this.updatePins = function (nodes) {
+//         // nodes.select("svg.nodeSvg")
+//         //     .attr("x", function (d) {
+//         //         var text = $("#node" + d.Id + " .nodeText");
+//         //         return Number(text.attr("x")) + text.width();
+//         //     })
+//         //     .attr("y", function (d) {
+//         //         var text = $("#node" + d.Id + " .nodeText");
+//         //         return -(text.height() / 2) - 4;
+//         //     })
+//         //     .style("display", function (d) {
+//         //         return d.isRest ? "none" : "block";
+//         //     });
+//     }
+// };
 
-var drawGrayBar = 1;
-var DrawBar = function() {
-    var _this = this;
-    this.createBars = function(nodes) {
-        if( drawGrayBar == 0) {
-            nodes.append("g")
-                .attr("class", "bar-chart");
-            nodes.each(function (n) {
-                var _n = d3.select(this).select("g.bar-chart");
-                var Rect = _n.selectAll("rect")
-                // .data( [get_current_focused_class(), n.data_count[get_current_focused_class()], -1, ( sum(n.data_count) - n.data_count[get_current_focused_class()] ) / 8 ])
-                    .data([get_current_focused_class(), n.data_count[get_current_focused_class()], 2, n.data_count[2], 3, n.data_count[3]])
-                    .enter()
-                    .append("rect")
-                    .attr("class", function (d, i) {
-                        if (i % 2 === 0) {
-                            return "bar-frame";
-                        }
-                        else {
-                            return "bar-fill";
-                        }
-                    })
-                    .attr("rx", 3)
-                    .attr("ry", 3);
-            });
-        }
-        else{
-            nodes.append("g")
-                .attr("class", "bar-chart");
-            nodes.each(function (n) {
-                var _n = d3.select(this).select("g.bar-chart");
-                var Rect = _n.selectAll("rect")
-                    .data( [get_current_focused_class(), n.data_count[get_current_focused_class()], -1, ( sum(n.data_count) - n.data_count[get_current_focused_class()] ) / 8 ])
-                    // .data([get_current_focused_class(), n.data_count[get_current_focused_class()], 2, n.data_count[2], 3, n.data_count[3]])
-                    .enter()
-                    .append("rect")
-                    .attr("class", function (d, i) {
-                        if (i % 2 === 0) {
-                            return "bar-frame";
-                        }
-                        else {
-                            return "bar-fill";
-                        }
-                    })
-                    .attr("rx", 3)
-                    .attr("ry", 3);
-            });
-        }
-    };
-    this.updateBars = function(nodes,colors) {
-        var max_high = 16;
-        var top = 18;
-        var max_length = 26;
-        var sum = function (arr){
-            var _s = 0;
-            for (var i = 0; i < arr.length; i ++) {
-                _s += arr[i];
-            }
-            return _s || 0;
-        };
-        if( drawGrayBar == 0) {
-            nodes.select("g.bar-chart")
-                .each(function (n, j) {
-                    var _n = d3.select(this);
-                    var fill_color;
-                    var stroke_color;
-                    _n.selectAll("rect")
-                        .attr("x", function (d, i) {
-                            if (i % 2 === 0) {
-                                return top - 15;
-                            }
-                            else {
-                                var temp = top - Math.round(d * 15);
-                                if(  Math.abs(temp - top) < 1.1 ) {
-                                    return top - 2;
-                                }
-                                return temp;
-                            }
-                        })
-                        .attr("y", function (d, i) {
-                            if (!n.parent) {
-                                return -28 - 8 * Math.floor(i / 2);
-                            }
-                            if (n.parent.children.indexOf(n) === 1) {
-                                return 22 + 8 * Math.floor(i / 2);
-                            }
-                            else {
-                                return -28 - 8 * Math.floor(i / 2);
-                            }
-                        })
-                        .attr("height", "6px")
-                        .attr("width", function (d, i) {
-                            if (i % 2 === 0) {
-                                return 15;
-                            }
-                            else {
-                                var temp =  Math.round(15 * d);
-                                if( Math.abs(temp) < 1.1 ){
-                                    return 2;
-                                }
-                                return temp;
-                            }
-                        })
-                        .attr("stroke-width", function (d, i) {
-                            if (i % 2 === 0) {
-                                return 1;
-                            }
-                            else {
-                                return 0;
-                            }
-                        })
-                        .attr("stroke", function (d, i) {
-                            // if( i < 2 ) {
-                            //     return color_manager.get_color(get_current_focused_class());
-                            // }
-                            // else{
-                            //     return "gray";
-                            // }
-                            if (i % 2 == 0) {
-                                stroke_color = d;
-                                return color_manager.get_color(d);
-                            }
-                            else
-                                return color_manager.get_color(stroke_color);
+// remove by Changjian, 2017/7/24
+// var drawGrayBar = 1;
+// var DrawBar = function() {
+//     var _this = this;
+//     this.createBars = function(nodes) {
+//         if( drawGrayBar == 0) {
+//             nodes.append("g")
+//                 .attr("class", "bar-chart");
+//             nodes.each(function (n) {
+//                 var _n = d3.select(this).select("g.bar-chart");
+//                 var Rect = _n.selectAll("rect")
+//                 // .data( [get_current_focused_class(), n.data_count[get_current_focused_class()], -1, ( sum(n.data_count) - n.data_count[get_current_focused_class()] ) / 8 ])
+//                     .data([get_current_focused_class(), n.data_count[get_current_focused_class()], 2, n.data_count[2], 3, n.data_count[3]])
+//                     .enter()
+//                     .append("rect")
+//                     .attr("class", function (d, i) {
+//                         if (i % 2 === 0) {
+//                             return "bar-frame";
+//                         }
+//                         else {
+//                             return "bar-fill";
+//                         }
+//                     })
+//                     .attr("rx", 3)
+//                     .attr("ry", 3);
+//             });
+//         }
+//         else{
+//             nodes.append("g")
+//                 .attr("class", "bar-chart");
+//             nodes.each(function (n) {
+//                 var _n = d3.select(this).select("g.bar-chart");
+//                 var Rect = _n.selectAll("rect")
+//                     .data( [get_current_focused_class(), n.data_count[get_current_focused_class()], -1, ( sum(n.data_count) - n.data_count[get_current_focused_class()] ) / 8 ])
+//                     // .data([get_current_focused_class(), n.data_count[get_current_focused_class()], 2, n.data_count[2], 3, n.data_count[3]])
+//                     .enter()
+//                     .append("rect")
+//                     .attr("class", function (d, i) {
+//                         if (i % 2 === 0) {
+//                             return "bar-frame";
+//                         }
+//                         else {
+//                             return "bar-fill";
+//                         }
+//                     })
+//                     .attr("rx", 3)
+//                     .attr("ry", 3);
+//             });
+//         }
+//     };
+//     this.updateBars = function(nodes,colors) {
+//         var max_high = 16;
+//         var top = 18;
+//         var max_length = 26;
+//         var sum = function (arr){
+//             var _s = 0;
+//             for (var i = 0; i < arr.length; i ++) {
+//                 _s += arr[i];
+//             }
+//             return _s || 0;
+//         };
+//         if( drawGrayBar == 0) {
+//             nodes.select("g.bar-chart")
+//                 .each(function (n, j) {
+//                     var _n = d3.select(this);
+//                     var fill_color;
+//                     var stroke_color;
+//                     _n.selectAll("rect")
+//                         .attr("x", function (d, i) {
+//                             if (i % 2 === 0) {
+//                                 return top - 15;
+//                             }
+//                             else {
+//                                 var temp = top - Math.round(d * 15);
+//                                 if(  Math.abs(temp - top) < 1.1 ) {
+//                                     return top - 2;
+//                                 }
+//                                 return temp;
+//                             }
+//                         })
+//                         .attr("y", function (d, i) {
+//                             if (!n.parent) {
+//                                 return -28 - 8 * Math.floor(i / 2);
+//                             }
+//                             if (n.parent.children.indexOf(n) === 1) {
+//                                 return 22 + 8 * Math.floor(i / 2);
+//                             }
+//                             else {
+//                                 return -28 - 8 * Math.floor(i / 2);
+//                             }
+//                         })
+//                         .attr("height", "6px")
+//                         .attr("width", function (d, i) {
+//                             if (i % 2 === 0) {
+//                                 return 15;
+//                             }
+//                             else {
+//                                 var temp =  Math.round(15 * d);
+//                                 if( Math.abs(temp) < 1.1 ){
+//                                     return 2;
+//                                 }
+//                                 return temp;
+//                             }
+//                         })
+//                         .attr("stroke-width", function (d, i) {
+//                             if (i % 2 === 0) {
+//                                 return 1;
+//                             }
+//                             else {
+//                                 return 0;
+//                             }
+//                         })
+//                         .attr("stroke", function (d, i) {
+//                             // if( i < 2 ) {
+//                             //     return color_manager.get_color(get_current_focused_class());
+//                             // }
+//                             // else{
+//                             //     return "gray";
+//                             // }
+//                             if (i % 2 == 0) {
+//                                 stroke_color = d;
+//                                 return color_manager.get_color(d);
+//                             }
+//                             else
+//                                 return color_manager.get_color(stroke_color);
+//
+//                         })
+//                         .attr("fill", function (d, i) {
+//                             // if( i < 2 ) {
+//                             //     return color_manager.get_color(get_current_focused_class());
+//                             // }
+//                             // else{
+//                             //     return "gray";
+//                             // }
+//                             if (i % 2 == 0) {
+//                                 fill_color = d;
+//                                 return color_manager.get_color(d);
+//                             }
+//                             else
+//                                 return color_manager.get_color(fill_color);
+//                         })
+//                         .attr("fill-opacity", function (d, i) {
+//                             if (i % 2 === 0) {
+//                                 return 0;
+//                             }
+//                             else {
+//                                 return 1;
+//                             }
+//                         })
+//                 });
+//         }
+//         else{
+//             nodes.select("g.bar-chart")
+//                 .each(function (n, j) {
+//                     var _n = d3.select(this);
+//                     var fill_color;
+//                     var stroke_color;
+//                     _n.selectAll("rect")
+//                         .attr("x", function (d, i) {
+//                             if (i % 2 === 0) {
+//                                 return top - 15;
+//                             }
+//                             else {
+//                                 var temp = top - Math.round(d * 15);
+//                                 if(  Math.abs(temp - top) < 1.1 ) {
+//                                     return top - 2;
+//                                 }
+//                                 return temp;
+//                             }
+//                         })
+//                         .attr("y", function (d, i) {
+//                             if (!n.parent) {
+//                                 return -30 - 8 * Math.floor(i / 2);
+//                             }
+//                             if (n.parent.children.indexOf(n) === 1) {
+//                                 return 22 + 8 * Math.floor(i / 2);
+//                             }
+//                             else {
+//                                 return -30 - 8 * Math.floor(i / 2);
+//                             }
+//                         })
+//                         .attr("height", "8px")
+//                         .attr("width", function (d, i) {
+//                             if (i % 2 === 0) {
+//                                 return 15;
+//                             }
+//                             else {
+//                                 var temp =  Math.round(15 * d);
+//                                 if( Math.abs(temp) < 1.1 ){
+//                                     return 2;
+//                                 }
+//                                 return temp;
+//                             }
+//                         })
+//                         .attr("stroke-width", function (d, i) {
+//                             if (i % 2 === 0) {
+//                                 return 1;
+//                             }
+//                             else {
+//                                 return 0;
+//                             }
+//                         })
+//                         .attr("stroke", function (d, i) {
+//                             if( i < 2 ) {
+//                                 return color_manager.get_color(get_current_focused_class());
+//                             }
+//                             else{
+//                                 return "gray";
+//                             }
+//
+//                         })
+//                         .attr("fill", function (d, i) {
+//                             if( i < 2 ) {
+//                                 return color_manager.get_color(get_current_focused_class());
+//                             }
+//                             else{
+//                                 return "gray";
+//                             }
+//                         })
+//                         .attr("fill-opacity", function (d, i) {
+//                             if (i % 2 === 0) {
+//                                 return 0;
+//                             }
+//                             else {
+//                                 return 1;
+//                             }
+//                         })
+//                         .attr("opacity",function(d,i){
+//                             if( DRAW_BAR === 1){
+//                                 return 1;
+//                             }
+//                             else{
+//                                 return 0;
+//                             }
+//                         })
+//                 });
+//         }
+//     };
+// };
 
-                        })
-                        .attr("fill", function (d, i) {
-                            // if( i < 2 ) {
-                            //     return color_manager.get_color(get_current_focused_class());
-                            // }
-                            // else{
-                            //     return "gray";
-                            // }
-                            if (i % 2 == 0) {
-                                fill_color = d;
-                                return color_manager.get_color(d);
-                            }
-                            else
-                                return color_manager.get_color(fill_color);
-                        })
-                        .attr("fill-opacity", function (d, i) {
-                            if (i % 2 === 0) {
-                                return 0;
-                            }
-                            else {
-                                return 1;
-                            }
-                        })
-                });
-        }
-        else{
-            nodes.select("g.bar-chart")
-                .each(function (n, j) {
-                    var _n = d3.select(this);
-                    var fill_color;
-                    var stroke_color;
-                    _n.selectAll("rect")
-                        .attr("x", function (d, i) {
-                            if (i % 2 === 0) {
-                                return top - 15;
-                            }
-                            else {
-                                var temp = top - Math.round(d * 15);
-                                if(  Math.abs(temp - top) < 1.1 ) {
-                                    return top - 2;
-                                }
-                                return temp;
-                            }
-                        })
-                        .attr("y", function (d, i) {
-                            if (!n.parent) {
-                                return -30 - 8 * Math.floor(i / 2);
-                            }
-                            if (n.parent.children.indexOf(n) === 1) {
-                                return 22 + 8 * Math.floor(i / 2);
-                            }
-                            else {
-                                return -30 - 8 * Math.floor(i / 2);
-                            }
-                        })
-                        .attr("height", "8px")
-                        .attr("width", function (d, i) {
-                            if (i % 2 === 0) {
-                                return 15;
-                            }
-                            else {
-                                var temp =  Math.round(15 * d);
-                                if( Math.abs(temp) < 1.1 ){
-                                    return 2;
-                                }
-                                return temp;
-                            }
-                        })
-                        .attr("stroke-width", function (d, i) {
-                            if (i % 2 === 0) {
-                                return 1;
-                            }
-                            else {
-                                return 0;
-                            }
-                        })
-                        .attr("stroke", function (d, i) {
-                            if( i < 2 ) {
-                                return color_manager.get_color(get_current_focused_class());
-                            }
-                            else{
-                                return "gray";
-                            }
 
-                        })
-                        .attr("fill", function (d, i) {
-                            if( i < 2 ) {
-                                return color_manager.get_color(get_current_focused_class());
-                            }
-                            else{
-                                return "gray";
-                            }
-                        })
-                        .attr("fill-opacity", function (d, i) {
-                            if (i % 2 === 0) {
-                                return 0;
-                            }
-                            else {
-                                return 1;
-                            }
-                        })
-                        .attr("opacity",function(d,i){
-                            if( DRAW_BAR === 1){
-                                return 1;
-                            }
-                            else{
-                                return 0;
-                            }
-                        })
-                });
-        }
-    };
-};
-var DrawDepthNode = function () {
-    var _this = this;
-    this.createDepthNodes = function (nodes) {
-        //     nodes.append("path")
-        //         .attr('class', 'nodeDepth')
-        //         .style("opacity", 0);
-    }
-    this.updateDepthNodes = function (nodes) {
-        // nodes.select("path.nodeDepth")
-        //     .attr("d", function (d) {
-        //         var radiu = 5;
-        //         var text = $("#node" + d.Id + " .nodeText");
-        //         var startX = text.width() + Number(text.attr("x")) + 5;
-        //         var len = (d.getDepth()) * radiu;
-        //         var x1 = startX + len * 0.5, x2 = len + startX - len * 0.5, x3 = len + startX;
-        //         return "M" + startX + " 0 C" + x1 + " 0 " + x2 + " -" + radiu + " " + x3 + " -" + radiu + " A" + radiu + " " + radiu + " 0 1 1 " + x3 + " " + radiu + " C" + x2 + " " + radiu + " " + x1 + " 0 " + startX + " 0 Z";
-        //     })
-        //     .style("opacity", function (d) {
-        //         return 0;
-        //         //return (d.allChildren && d.allChildren.length > 0 && (!d.myChildren || d.myChildren.length === 0)) ? 1 : 0;
-        //     });
-    }
-};
+// remove by Changjian, 2017/7/24
+// var DrawDepthNode = function () {
+//     var _this = this;
+//     this.createDepthNodes = function (nodes) {
+//         //     nodes.append("path")
+//         //         .attr('class', 'nodeDepth')
+//         //         .style("opacity", 0);
+//     }
+//     this.updateDepthNodes = function (nodes) {
+//         // nodes.select("path.nodeDepth")
+//         //     .attr("d", function (d) {
+//         //         var radiu = 5;
+//         //         var text = $("#node" + d.Id + " .nodeText");
+//         //         var startX = text.width() + Number(text.attr("x")) + 5;
+//         //         var len = (d.getDepth()) * radiu;
+//         //         var x1 = startX + len * 0.5, x2 = len + startX - len * 0.5, x3 = len + startX;
+//         //         return "M" + startX + " 0 C" + x1 + " 0 " + x2 + " -" + radiu + " " + x3 + " -" + radiu + " A" + radiu + " " + radiu + " 0 1 1 " + x3 + " " + radiu + " C" + x2 + " " + radiu + " " + x1 + " 0 " + startX + " 0 Z";
+//         //     })
+//         //     .style("opacity", function (d) {
+//         //         return 0;
+//         //         //return (d.allChildren && d.allChildren.length > 0 && (!d.myChildren || d.myChildren.length === 0)) ? 1 : 0;
+//         //     });
+//     }
+// };
 
-var DrawRestNode = function (dragListener) {
-    var _this = this;
-    this.createRestNodes = function (nodes) {
-        // nodes.filter(".rest").append("ellipse")
-        //     .attr('class', 'nodeRest')
-        //     .attr("cx", 13)
-        //     .attr("rx", 6)
-        //     .attr("ry", function (d) {
-        //         return 0;
-        //     });
-    }
-    this.updateRestNode = function (nodes) {
-        // nodes.select(".nodeRest")
-        //     .attr("ry", function (d) {
-        //         return 6 + Math.log10(d.restChildrenCnt) * 6;
-        //     })
-        //     .attr("fill", function (d) {
-        //         var parent = d;
-        //         while (parent.parent) {
-        //             parent = parent.parent;
-        //         }
-        //         var tmp = parseInt((1 - (d.restDocumentCnt / parent.documentCnt)) * 100) + 85;
-        //         return "rgb(" + tmp + "," + tmp + "," + tmp + ")";
-        //     });
-    }
-};
+// remove by Changjian, 2017/7/24
+// var DrawRestNode = function (dragListener) {
+//     var _this = this;
+//     this.createRestNodes = function (nodes) {
+//         // nodes.filter(".rest").append("ellipse")
+//         //     .attr('class', 'nodeRest')
+//         //     .attr("cx", 13)
+//         //     .attr("rx", 6)
+//         //     .attr("ry", function (d) {
+//         //         return 0;
+//         //     });
+//     }
+//     this.updateRestNode = function (nodes) {
+//         // nodes.select(".nodeRest")
+//         //     .attr("ry", function (d) {
+//         //         return 6 + Math.log10(d.restChildrenCnt) * 6;
+//         //     })
+//         //     .attr("fill", function (d) {
+//         //         var parent = d;
+//         //         while (parent.parent) {
+//         //             parent = parent.parent;
+//         //         }
+//         //         var tmp = parseInt((1 - (d.restDocumentCnt / parent.documentCnt)) * 100) + 85;
+//         //         return "rgb(" + tmp + "," + tmp + "," + tmp + ")";
+//         //     });
+//     }
+// };
 
 var DrawLink = function () {
     var _this = this;
@@ -782,7 +793,7 @@ var DrawLink = function () {
         //     .duration(duration)
         //     .style("opacity", 0)
         // ;
-    }
+    };
     this.updateLinks1 = function (links, draggingNode, time_length) {
         links.transition()
             .duration(duration)
@@ -989,11 +1000,6 @@ var DrawLink = function () {
     };
 
     this.updateLinks = function (links, draggingNode, colors, nodes, tree_height,top_level ) {
-        //console.log( "tree_height " + tree_height);
-        // if( first_flag === 1 ){
-        //     first_flag = 0;
-        //     return;
-        // }
         links
             .attr("d", function (d) {
                 if (draggingNode && draggingNode === d.target) {
@@ -1052,6 +1058,8 @@ var DrawLink = function () {
                 // links.enter()
                 //     .append("path");
                 // if ( g.level != level ) return;
+
+                //TODO: Changjian, need to be removed
                 if( 1 ) {
                     links = links
                         .transition()
@@ -1148,6 +1156,7 @@ var DrawLink = function () {
     };
 
     this.showRestLinks = function (nodes) {
+        nodes.selectAll("g.restlink-group").remove();
         nodes.append("g")
             .attr("class", "restlink-group")
             .attr("id", function (n, i) {
@@ -1180,5 +1189,5 @@ var DrawLink = function () {
                 restLinks.exit().remove();
             });
     };
-}
+};
 

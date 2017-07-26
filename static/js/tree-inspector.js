@@ -109,7 +109,6 @@ TreeInspector_svg.prototype.draw_next_tree = function () {
         }
         that.draw_tree(that.iteration + 1, that.class_);
         //that.draw_next_tree(that.iteration - 2);
-        on_timepoint_highlight(that.iteration - 2);
     }
 };
 
@@ -120,8 +119,6 @@ TreeInspector_svg.prototype.draw_prev_tree = function () {
             return;
         }
         that.draw_tree(that.iteration - 1, that.class_);
-        //that.on_instance_timepoint_highlight(that.iteration - 4);
-        on_timepoint_highlight(that.iteration - 2);
     }
 };
 
@@ -231,16 +228,18 @@ TreeInspector_svg.prototype.plot_all_instances = function (data_distribution, fo
             }
         }
     }
-
-    that.resultTree.applyCluster(focus_distribution, color_manager.get_color(focused_class));
-    that.resultTree.applyCluster(other_distribution, color_manager.get_noob_color1(), true);
+    //Edit by Changjian, seperate data updating and layout function to avoid repeating layout rending. 2017/7/24
+    that.resultTree.setColorAndCountdata(focus_distribution,color_manager.get_color(focused_class));
+    that.resultTree.setColorAndCountdata(other_distribution,color_manager.get_noob_color1());
+    that.resultTree.applyCluster();
 };
 
 TreeInspector_svg.prototype.plot_cluster = function (cluster, color) {
     var count = calculate_instance_count_on_nodes2(this.iteration, this.class_, cluster);
     var count_on_leaves = count["inst_count_on_leaves"].splice(1);
     var count_on_internal = count["inst_count_on_internals"];
-    this.resultTree.applyCluster(count_on_internal.concat(count_on_leaves), color);
+    this.resultTree.setColorAndCountdata(count_on_internal.concat(count_on_leaves), color); // add by Changjian, seperate data updating and layout function. 2017/7/24
+    this.resultTree.applyCluster();
 };
 
 TreeInspector_svg.prototype.update_cluster_information = function () {

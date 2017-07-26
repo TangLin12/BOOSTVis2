@@ -106,7 +106,7 @@ var POSTERIOR_ALL = {};
 var CLUSTERING_ALL = {};
 var FEATURE_IMPORTANCE = null;
 var TREE_SIZE = null;
-var CONFIDENT_LINES_CLUSTER_RESULT_ALL = [null,null,null,null,null,null,null,null,null];
+var CONFIDENT_LINES_CLUSTER_RESULT_ALL;
 var CLASSIFIER_DISTANCE_ALL = [];
 
 var clicked_node = null;

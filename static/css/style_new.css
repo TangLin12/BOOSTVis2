@@ -328,6 +328,14 @@ svg.overflow {
     cursor: pointer;
 }
 
+.hide-positive-instance-link {
+    position: absolute;
+    right: 40%;
+    display: inline;
+    color: grey;
+    cursor: pointer;
+}
+
 form.header-button>input {
     float: right;
 }
