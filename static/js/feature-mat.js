@@ -182,7 +182,10 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
             max_bin = Math.max(max_bin, transformed_bin_focus[i]);
             max_bin = Math.max(max_bin, transformed_bin_others[i]);
         }
-        var percent_begin = 0;
+
+        var single_space_width = 0.05 * bar_width;
+        var x_begin = single_space_width;
+        var true_bar_width = bar_width - single_space_width * (bin_number - 1);
         for (var i = 0;i < bin_number; i++) {
             var focus_bin_height = transformed_bin_focus[i] / max_bin * (ybottom - ytop - 5 * that.scale);
             var others_bin_height = transformed_bin_others[i] / max_bin * (ybottom - ytop - 5 * that.scale);
@@ -190,16 +193,15 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
             focus_bin_height = focus_bin_height * (that.currentFrame / that.totalFrames);
             others_bin_height = others_bin_height * (that.currentFrame / that.totalFrames);
 
-            var xleft = Math.round(bar_width * percent_begin / 100);
-            var xright = Math.round(bar_width * (percent_begin + bin_widths[k][i]) / 100);
-            var xmid = Math.round((xleft + xright) / 2);
-            var single_bar_width = Math.round((xright - xleft) * 7 / 16);
+            var xleft = Math.round(x_begin);
+            var xright = Math.round(xleft + true_bar_width * bin_widths[k][i] / 100);
+            var single_bar_width = Math.round((xright - xleft) / 2);
 
             that.fh_context.fillStyle = hexToRGB(color_manager.get_color(focused_class));
-            that.fh_context.fillRect(xmid + text_width, ybottom - focus_bin_height, single_bar_width, focus_bin_height);
+            that.fh_context.fillRect(xleft + single_bar_width + text_width, ybottom - focus_bin_height, single_bar_width, focus_bin_height);
             that.fh_context.fillStyle = hexToRGB('#AAAAAA', 0.7);
-            that.fh_context.fillRect(xmid - single_bar_width + text_width, ybottom - others_bin_height, single_bar_width, others_bin_height);
-            percent_begin += bin_widths[k][i];
+            that.fh_context.fillRect(xleft + text_width, ybottom - others_bin_height, single_bar_width, others_bin_height);
+            x_begin = xright + single_space_width;
         }
     }
 
@@ -339,7 +341,10 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = fun
             max_bin = Math.max(max_bin, transformed_bin_focus[i]);
             max_bin = Math.max(max_bin, transformed_bin_others[i]);
         }
-        var percent_begin = 0;
+
+        var single_space_width = 0.05 * bar_width;
+        var x_begin = single_space_width;
+        var true_bar_width = bar_width - single_space_width * bin_number;
 
         for (var i = 0;i < bin_number; i++) {
             var focus_bin_height = transformed_bin_focus[i] / max_bin * (ybottom - ytop - 5 * that.scale);
@@ -348,10 +353,9 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = fun
             focus_bin_height = focus_bin_height * (that.currentFrame / that.totalFrames);
             others_bin_height = others_bin_height * (that.currentFrame / that.totalFrames);
 
-            var xleft = Math.round(bar_width * percent_begin / 100);
-            var xright = Math.round(bar_width * (percent_begin + bin_widths[k][i]) / 100);
-            var xmid = Math.round((xleft + xright) / 2);
-            var single_bar_width = Math.round((xright - xleft) * 7 / 16);
+            var xleft = Math.round(x_begin);
+            var xright = Math.round(xleft + true_bar_width * bin_widths[k][i] / 100);
+            var single_bar_width = Math.round((xright - xleft) / 2);
 
             if (bins_instance[k][i] > 0) {
                 that.fh_context.fillStyle = hexToRGB(color_manager.get_color(TRUE_LABELS[index]), 0.3);
@@ -359,10 +363,10 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = fun
             }
 
             that.fh_context.fillStyle = hexToRGB(color_manager.get_color(focused_class));
-            that.fh_context.fillRect(xmid + text_width, ybottom - focus_bin_height, single_bar_width, focus_bin_height);
+            that.fh_context.fillRect(xleft + single_bar_width + text_width, ybottom - focus_bin_height, single_bar_width, focus_bin_height);
             that.fh_context.fillStyle = hexToRGB('#AAAAAA', 0.7);
-            that.fh_context.fillRect(xmid - single_bar_width + text_width, ybottom - others_bin_height, single_bar_width, others_bin_height);
-            percent_begin += bin_widths[k][i];
+            that.fh_context.fillRect(xleft + text_width, ybottom - others_bin_height, single_bar_width, others_bin_height);
+            x_begin = xright + single_space_width;
         }
     }
 
@@ -497,14 +501,17 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters_partially = function
                 max_bin = Math.max(max_bin, transformed_bin_collec[i][j]);
             }
         }
-        var percent_begin = 0;
+
+        var single_space_width = 0.05 * bar_width;
+        var x_begin = single_space_width;
+        var true_bar_width = bar_width - single_space_width * (bin_number - 1);
 
         for (var i = 0;i < bin_number; i++) {
-            var xleft = Math.round(bar_width * percent_begin / 100);
-            var xright = Math.round(bar_width * (percent_begin + bin_widths[k][i]) / 100);
-            percent_begin += bin_widths[k][i];
-            var xmid = Math.round((xleft + xright) / 2);
-            var single_bar_width = Math.round((xright - xleft) * 7 / 8 / cluster_count);
+            var xleft = Math.round(x_begin);
+            var xright = Math.round(xleft + true_bar_width * bin_widths[k][i] / 100);
+            var single_bar_width = Math.round((xright - xleft) / 2);
+            x_begin = xright + single_space_width;
+
             var bin_height = [];
             var bin_xleft = [];
             var bin_xright = [];
@@ -512,8 +519,8 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters_partially = function
             for (j = 0; j < cluster_count; j++) {
                 bin_height[j] = transformed_bin_collec[j][i] / max_bin * (ybottom - ytop - 5 * that.scale);
                 bin_height[j] = bin_height[j] * (that.currentFrame / that.totalFrames);
-                bin_xleft[j] = xmid + (j - cluster_count / 2) * single_bar_width;
-                bin_xright[j] = bin_xleft[j] + single_bar_width;
+                bin_xleft[j] = xleft + j * single_bar_width;
+                bin_xright[j] = xleft + (j + 1) * single_bar_width;
             }
 
 
@@ -660,13 +667,17 @@ FeatureMatrix.prototype.render_separation_features_for_clusters_partially = func
                 max_bin = Math.max(max_bin, transformed_bin_collec[i][j]);
             }
         }
-        var percent_begin = 0;
+
+        var single_space_width = 0.05 * bar_width;
+        var x_begin = single_space_width;
+        var true_bar_width = bar_width - single_space_width * (bin_number - 1);
 
         for (var i = 0;i < bin_number; i++) {
-            var xleft = Math.round(bar_width * percent_begin / 100);
-            var xright = Math.round(bar_width * (percent_begin + bin_widths[feature_id][i]) / 100);
-            var xmid = Math.round((xleft + xright) / 2);
-            var single_bar_width = Math.round((xright - xleft) * 7 / 8 / cluster_count);
+            var xleft = Math.round(x_begin);
+            var xright = Math.round(xleft + true_bar_width * bin_widths[k][i] / 100);
+            var single_bar_width = Math.round((xright - xleft) / 2);
+            x_begin = xright + single_space_width;
+
             var bin_height = [];
             var bin_xleft = [];
             var bin_xright = [];
@@ -674,8 +685,8 @@ FeatureMatrix.prototype.render_separation_features_for_clusters_partially = func
             for (j = 0; j < cluster_count; j++) {
                 bin_height[j] = transformed_bin_collec[i][j] / max_bin * (ybottom - ytop - 5 * that.scale);
                 bin_height[j] = bin_height[j] * (that.currentFrame / that.totalFrames);
-                bin_xleft[j] = xmid + (j - cluster_count / 2) * single_bar_width;
-                bin_xright[j] = bin_xleft[j] + single_bar_width;
+                bin_xleft[j] = xleft + j * single_bar_width;
+                bin_xright[j] = xleft + (j + 1) * single_bar_width;
             }
 
 
@@ -785,7 +796,7 @@ FeatureMatrix.prototype.get_average_feature_importance = function (focused_class
 
     var imp = [];
     for (var i = 0; i < FEATURE_COUNT; i++) {
-        imp[i] = FEATURE_IMPORTANCE[focused_class][i];
+        imp[i] = FEATURE_IMPORTANCE[focused_class * FEATURE_COUNT + i];
     }
 
     var imp2 = [];
