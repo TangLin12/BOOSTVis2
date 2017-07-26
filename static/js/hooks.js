@@ -2,11 +2,6 @@
  * Created by Derek Xiao on 2017/2/8.
  */
 
-var on_timepoint_highlight = function (p) {
-    $("#iteration-indicator").text(p);
-    navigation.on_instance_timepoint_highlight(p);
-};
-
 var show_tree_classifier = function (iteration, class_) {
     class_ = class_ || confidence_lines.focused_class;
     iteration = Math.max(iteration, 0);
@@ -47,15 +42,15 @@ var is_instance_mode = function () {
                     && confidence_lines.mode == confidence_lines.instanceMode);
 };
 
-var get_current_focused_class = function () {
-    return confidence_lines.focused_class;
-};
-
 var tree_list_highlight = function (tree_index, class_) {
     if (!USING_CLASSIFIER) {
         return;
     }
     tree_list.highlight_representative_tree(tree_index, class_);
+};
+
+var get_current_focused_class = function () {
+    return confidence_lines.focused_class;
 };
 
 var focus_on_class = function (focused_class) {
@@ -64,6 +59,22 @@ var focus_on_class = function (focused_class) {
         tree_list.show_tree_list(focused_class);
     }
     class_selector.highlight_class(confusion_matrix.reverse_ranking[focused_class]);
+};
+
+var confidence_lines_mousedown = function (e) {
+    var loc = windowToCanvas(this, e.clientX, e.clientY);
+    e.preventDefault();
+    confidence_lines.canvas_mousedown(loc, this);
+};
+
+var confidence_lines_mousemove = function (e) {
+    var loc = windowToCanvas(this, e.clientX, e.clientY);
+    e.preventDefault();
+    confidence_lines.canvas_mousemove(loc, this);
+};
+
+var confidence_lines_mouseout = function (e) {
+    confidence_lines.canvas_mouseout();
 };
 
 var click_class = function (label) {
@@ -76,31 +87,6 @@ var click_class = function (label) {
     if (USING_CLASSIFIER) {
         treesize_barchart.render_tree_size_bar_chart(label);
         tree_inspector.clear_clusters();
-    }
-};
-
-var retrieve_posterior = function (class_, callback) {
-    console.log("request posterior", class_);
-    if (POSTERIOR_ALL[class_]) {
-        callback(POSTERIOR_ALL[class_]);
-    } else {
-        var task = "/api/posterior-by-class" + PARAMS + "&class_=" + class_;
-        var oReq = new XMLHttpRequest();
-        oReq.open("GET", task, true);
-        oReq.responseType = "arraybuffer";
-        oReq.setRequestHeader("cache-control", "no-cache");
-
-        oReq.onload = function (oEvent) {
-            var arrayBuffer = oReq.response;
-            if (arrayBuffer) {
-                var byteArray = new Float32Array(arrayBuffer);
-
-                POSTERIOR_ALL[class_] = byteArray;
-
-                callback(POSTERIOR_ALL[class_]);
-            }
-        };
-        oReq.send(null);
     }
 };
 

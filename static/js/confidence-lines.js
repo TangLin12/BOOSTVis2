@@ -37,9 +37,9 @@ function ConfidenceLines(container) {
     that.cl_canvas.left_gap = 35;
     that.cl_canvas.right_gap = 10;
 
-    that.cl_canvas.onmousedown = that.canvas_mousedown;
-    that.cl_canvas.onmouseout = that.canvas_mouseout;
-    that.cl_canvas.onmousemove = that.canvas_mousemove;
+    that.cl_canvas.onmousedown = confidence_lines_mousedown;
+    that.cl_canvas.onmouseout = confidence_lines_mouseout;
+    that.cl_canvas.onmousemove = confidence_lines_mousemove;
 
     that.T = SEGMENT_COUNT;
     that.partition_count = 10;
@@ -68,8 +68,7 @@ function ConfidenceLines(container) {
 }
 
 ConfidenceLines.prototype.canvas_mouseout = function () {
-    var that = confidence_lines;
-    that.render_instance_charts(that.focused_class, that.cluster_label, that.cluster_id, that.focused_segment, that.focused_subsegment);
+    this.render_instance_charts(this.focused_class, this.cluster_label, this.cluster_id, this.focused_segment, this.focused_subsegment);
     document.getElementsByTagName("html").item(0).style.cursor = "";
 };
 
@@ -91,36 +90,31 @@ ConfidenceLines.prototype.update_cluster_alpha_value = function () {
     }
 };
 
-ConfidenceLines.prototype.canvas_mousemove = function (e) {
-    var loc = windowToCanvas(this, e.clientX, e.clientY);
-
-    e.preventDefault();
-
+ConfidenceLines.prototype.canvas_mousemove = function (loc, canvas) {
     var that = this;
-
-    if (confidence_lines.mode == confidence_lines.clusterMode) {
+    if (that.mode == that.clusterMode) {
         var mouseType = "";
-        if (loc.x > that.width - that.right_gap) {
-            var pos = loc.y - that.top_gap;
-            for (var i = 0; i < that.bar_postition.length; i++) {
-                var bar_pos = that.bar_postition[i];
-                var h = that.half_bar_height;
+        if (loc.x > canvas.width - canvas.right_gap) {
+            var pos = loc.y - canvas.top_gap;
+            for (var i = 0; i < canvas.bar_postition.length; i++) {
+                var bar_pos = canvas.bar_postition[i];
+                var h = canvas.half_bar_height;
                 if (pos > bar_pos - h && pos < bar_pos + h) {
                     mouseType = "pointer";
-                    var cluster_label = confidence_lines.all_final_probs[i]['cluster_label'];
-                    var cluster_id = confidence_lines.all_final_probs[i]['cluster_id'];
-                    confidence_lines.render_instance_charts(confidence_lines.focused_class, cluster_label, cluster_id, confidence_lines.focused_segment, confidence_lines.focused_subsegment);
+                    var cluster_label = that.all_final_probs[i]['cluster_label'];
+                    var cluster_id = that.all_final_probs[i]['cluster_id'];
+                    confidence_lines.render_instance_charts(that.focused_class, cluster_label, cluster_id, that.focused_segment, that.focused_subsegment);
                    break;
                 }
             }
         }
         else if (loc.x > 0){
-            var line = confidence_lines.get_closest_line(loc.x, loc.y, 5);
+            var line = that.get_closest_line(loc.x, loc.y, 5);
             if (line != null) {
                 mouseType = "pointer";
                 var cluster_label = line.k;
                 var cluster_id = line.i;
-                confidence_lines.render_instance_charts(confidence_lines.focused_class, cluster_label, cluster_id, confidence_lines.focused_segment, confidence_lines.focused_subsegment);
+                that.render_instance_charts(that.focused_class, cluster_label, cluster_id, that.focused_segment, that.focused_subsegment);
             }
         }
         if (mouseType != "") {
@@ -128,178 +122,142 @@ ConfidenceLines.prototype.canvas_mousemove = function (e) {
         }
         else {
             document.getElementsByTagName("html").item(0).style.cursor=mouseType;
-            confidence_lines.render_instance_charts(confidence_lines.focused_class, -1, -1, confidence_lines.focused_segment, confidence_lines.focused_subsegment);
+            that.render_instance_charts(that.focused_class, -1, -1, that.focused_segment, that.focused_subsegment);
         }
     }
 };
 
 
-ConfidenceLines.prototype.canvas_mousedown = function (e) {
-    var loc = windowToCanvas(this, e.clientX, e.clientY);
-
-    e.preventDefault();
-
+ConfidenceLines.prototype.canvas_mousedown = function (loc, canvas) {
     var that = this;
-
-    if (confidence_lines.mode == confidence_lines.clusterMode) {
-        if (loc.x > that.width - that.right_gap) {
-            var pos = loc.y - that.top_gap;
-            for (var i = 0; i < that.bar_postition.length; i++) {
-                var bar_pos = that.bar_postition[i];
-                var h = that.half_bar_height;
+    if (that.mode == that.clusterMode) {
+        if (loc.x > canvas.width - canvas.right_gap) {
+            var pos = loc.y - canvas.top_gap;
+            for (var i = 0; i < canvas.bar_postition.length; i++) {
+                var bar_pos = canvas.bar_postition[i];
+                var h = canvas.half_bar_height;
                 if (pos > bar_pos - h && pos < bar_pos + h) {
-                    var cluster_label = confidence_lines.all_final_probs[i]['cluster_label'];
-                    var cluster_id = confidence_lines.all_final_probs[i]['cluster_id'];
+                    var cluster_label = that.all_final_probs[i]['cluster_label'];
+                    var cluster_id = that.all_final_probs[i]['cluster_id'];
 
-                    confidence_lines.cluster_label = cluster_label;
-                    confidence_lines.cluster_id = cluster_id;
+                    that.cluster_label = cluster_label;
+                    that.cluster_id = cluster_id;
                     // add by Shouxing, 2017 / 7 / 20
-                    var clusterSetSize = confidence_lines.cluster_id_set.length;
+                    var clusterSetSize = that.cluster_id_set.length;
                     if (clusterSetSize >= 7) {
-                        confidence_lines.cluster_label = cluster_label;
-                        confidence_lines.cluster_id = cluster_id;
-                        confidence_lines.cluster_label_set.splice(0, 1);
-                        confidence_lines.cluster_id_set.splice(0, 1);
-                        confidence_lines.cluster_label_set.push(cluster_label);
-                        confidence_lines.cluster_id_set.push(cluster_id);
+                        that.cluster_label = cluster_label;
+                        that.cluster_id = cluster_id;
+                        that.cluster_label_set.splice(0, 1);
+                        that.cluster_id_set.splice(0, 1);
+                        that.cluster_label_set.push(cluster_label);
+                        that.cluster_id_set.push(cluster_id);
                     }
                     else {
                         var sameLabelCount = 0;
                         for (i = clusterSetSize - 1;i >= 0;i--) {
-                            if (confidence_lines.cluster_label_set[i] == cluster_label) {
+                            if (that.cluster_label_set[i] == cluster_label) {
                                 sameLabelCount++;
-                                if(confidence_lines.cluster_id_set[i] == cluster_id) {
-                                    confidence_lines.cluster_id_set.splice(i, 1);
-                                    confidence_lines.cluster_label_set.splice(i, 1);
+                                if(that.cluster_id_set[i] == cluster_id) {
+                                    that.cluster_id_set.splice(i, 1);
+                                    that.cluster_label_set.splice(i, 1);
                                     if (i == clusterSetSize - 1) {
-                                        confidence_lines.cluster_label = confidence_lines.cluster_label_set[-1];
-                                        confidence_lines.cluster_id = confidence_lines.cluster_id_set[-1];
+                                        that.cluster_label = that.cluster_label_set[-1];
+                                        that.cluster_id = that.cluster_id_set[-1];
                                     }
                                     break;
                                 }
                                 if (sameLabelCount == 2) {
-                                    confidence_lines.cluster_id_set.splice(i, 1);
-                                    confidence_lines.cluster_label_set.splice(i, 1);
-                                    confidence_lines.cluster_label_set.push(cluster_label);
-                                    confidence_lines.cluster_id_set.push(cluster_id);
-                                    confidence_lines.cluster_label = cluster_label;
-                                    confidence_lines.cluster_id = cluster_id;
+                                    that.cluster_id_set.splice(i, 1);
+                                    that.cluster_label_set.splice(i, 1);
+                                    that.cluster_label_set.push(cluster_label);
+                                    that.cluster_id_set.push(cluster_id);
+                                    that.cluster_label = cluster_label;
+                                    that.cluster_id = cluster_id;
                                     break;
                                 }
                             }
                         }
                         if (i == -1) {
-                            confidence_lines.cluster_label_set.push(cluster_label);
-                            confidence_lines.cluster_id_set.push(cluster_id);
-                            confidence_lines.cluster_label = cluster_label;
-                            confidence_lines.cluster_id = cluster_id;
+                            that.cluster_label_set.push(cluster_label);
+                            that.cluster_id_set.push(cluster_id);
+                            that.cluster_label = cluster_label;
+                            that.cluster_id = cluster_id;
                         }
                     }
-                    tree_inspector.update_cluster_information();
-
-                    confidence_lines.update_cluster_alpha_value();
-
-                    if (confidence_lines.focused_segment == null) {
-                        confidence_lines.focused_segment = 0;
-                        confidence_lines.focused_subsegment = 0;
+                    if (tree_inspector) {
+                        tree_inspector.update_cluster_information();
                     }
-
-                    confidence_lines.render_instance_charts(confidence_lines.focused_class, cluster_label, cluster_id, confidence_lines.focused_segment, confidence_lines.focused_subsegment);
-
-                    // on_time_series_cluster_selection_updated(_.map(confidence_lines.cluster_label_set, function (l, i) {
-                    //     return [
-                    //         confidence_lines.clusters[confidence_lines.cluster_label_set[i]][confidence_lines.cluster_id_set[i]],
-                    //         SELECTED_CLASSES[confidence_lines.cluster_label_set[i]]
-                    //     ];
-                    // }));
-
+                    this.update_cluster_alpha_value();
+                    if (that.focused_segment == null) {
+                        that.focused_segment = 0;
+                        that.focused_subsegment = 0;
+                    }
+                    that.render_instance_charts(that.focused_class, cluster_label, cluster_id, that.focused_segment, that.focused_subsegment);
                     feature_matrix.render_feature_ranking_for_clusters();
                     break;
                 }
             }
         }
         else if (loc.x > 0){
-            var line = confidence_lines.get_closest_line(loc.x, loc.y, 5);
+            var line = that.get_closest_line(loc.x, loc.y, 5);
             if (line != null) {
                 var cluster_label = line.k;
                 var cluster_id = line.i;
                 // add by Shouxing, 2017 / 7 / 20
-                var clusterSetSize = confidence_lines.cluster_id_set.length;
+                var clusterSetSize = that.cluster_id_set.length;
                 if (clusterSetSize >= 7) {
-                    confidence_lines.cluster_label = cluster_label;
-                    confidence_lines.cluster_id = cluster_id;
-                    confidence_lines.cluster_label_set.splice(0, 1);
-                    confidence_lines.cluster_id_set.splice(0, 1);
-                    confidence_lines.cluster_label_set.push(cluster_label);
-                    confidence_lines.cluster_id_set.push(cluster_id);
+                    that.cluster_label = cluster_label;
+                    that.cluster_id = cluster_id;
+                    that.cluster_label_set.splice(0, 1);
+                    that.cluster_id_set.splice(0, 1);
+                    that.cluster_label_set.push(cluster_label);
+                    that.cluster_id_set.push(cluster_id);
                 }
                 else {
                     var sameLabelCount = 0;
                     for (i = clusterSetSize - 1;i >= 0;i--) {
-                        if (confidence_lines.cluster_label_set[i] == cluster_label) {
+                        if (that.cluster_label_set[i] == cluster_label) {
                             sameLabelCount++;
-                            if(confidence_lines.cluster_id_set[i] == cluster_id) {
-                                confidence_lines.cluster_id_set.splice(i, 1);
-                                confidence_lines.cluster_label_set.splice(i, 1);
+                            if(that.cluster_id_set[i] == cluster_id) {
+                                that.cluster_id_set.splice(i, 1);
+                                that.cluster_label_set.splice(i, 1);
                                 if (i == clusterSetSize - 1) {
-                                    confidence_lines.cluster_label = confidence_lines.cluster_label_set[-1];
-                                    confidence_lines.cluster_id = confidence_lines.cluster_id_set[-1];
+                                    that.cluster_label = that.cluster_label_set[-1];
+                                    that.cluster_id = that.cluster_id_set[-1];
                                 }
                                 break;
                             }
                             if (sameLabelCount == 2) {
-                                confidence_lines.cluster_id_set.splice(i, 1);
-                                confidence_lines.cluster_label_set.splice(i, 1);
-                                confidence_lines.cluster_label_set.push(cluster_label);
-                                confidence_lines.cluster_id_set.push(cluster_id);
-                                confidence_lines.cluster_label = cluster_label;
-                                confidence_lines.cluster_id = cluster_id;
+                                that.cluster_id_set.splice(i, 1);
+                                that.cluster_label_set.splice(i, 1);
+                                that.cluster_label_set.push(cluster_label);
+                                that.cluster_id_set.push(cluster_id);
+                                that.cluster_label = cluster_label;
+                                that.cluster_id = cluster_id;
                                 break;
                             }
                         }
                     }
                     if (i == -1) {
-                        confidence_lines.cluster_label_set.push(cluster_label);
-                        confidence_lines.cluster_id_set.push(cluster_id);
-                        confidence_lines.cluster_label = cluster_label;
-                        confidence_lines.cluster_id = cluster_id;
+                        that.cluster_label_set.push(cluster_label);
+                        that.cluster_id_set.push(cluster_id);
+                        that.cluster_label = cluster_label;
+                        that.cluster_id = cluster_id;
                     }
                 }
-
-                tree_inspector.update_cluster_information();
-
-
-
-                confidence_lines.update_cluster_alpha_value();
-
-                if (confidence_lines.focused_segment == null) {
-                    confidence_lines.focused_segment = 0;
-                    confidence_lines.focused_subsegment = 0;
+                if (tree_inspector) {
+                    tree_inspector.update_cluster_information();
                 }
-
-                confidence_lines.render_instance_charts(confidence_lines.focused_class, cluster_label, cluster_id, confidence_lines.focused_segment, confidence_lines.focused_subsegment);
-
-                // on_time_series_cluster_selection_updated(_.map(confidence_lines.cluster_label_set, function (l, i) {
-                //     return [
-                //         confidence_lines.clusters[confidence_lines.cluster_label_set[i]][confidence_lines.cluster_id_set[i]],
-                //         SELECTED_CLASSES[confidence_lines.cluster_label_set[i]]
-                //     ];
-                // }));
-
-
-                var alpha = confidence_lines.cluster_alpha_set[confidence_lines.cluster_alpha_set.length - 1];
-                //var color = hexToRGB(color_manager.get_color(SELECTED_CLASSES[cluster_label]), alpha);
-                var color = (changeColorLightness(color_manager.get_color(SELECTED_CLASSES[cluster_label]), alpha));
-
-
-                // tree_inspector.plot_cluster(confidence_lines.clusters[confidence_lines.cluster_label][confidence_lines.cluster_id], color);
-                // tree_inspector.add_cluster(confidence_lines.clusters[confidence_lines.cluster_label][confidence_lines.cluster_id], SELECTED_CLASSES[cluster_label]);
-
+                that.update_cluster_alpha_value();
+                if (that.focused_segment == null) {
+                    that.focused_segment = 0;
+                    that.focused_subsegment = 0;
+                }
+                that.render_instance_charts(that.focused_class, cluster_label, cluster_id, that.focused_segment, that.focused_subsegment);
                 feature_matrix.render_feature_ranking_for_clusters();
             }
         }
     }
-
 };
 
 ConfidenceLines.prototype.get_closest_line = function (eventX, eventY, gap) {
@@ -369,25 +327,6 @@ ConfidenceLines.prototype.get_instance_line_chart = function (focused_class) {
     that.get_instance_line_chart_one_class(focused_class);
 };
 
-ConfidenceLines.prototype.get_predicted_labels = function () {
-    var that = this;
-    var T = that.T;
-
-    var predicted_labels = [];
-    for (var i = 0; i < INSTANCE_COUNT; i++) {
-        var max_value = 0;
-        predicted_labels[i] = -1;
-        for (var j = 0; j < CLASS_COUNT; j++) {
-            var p = that.posterior[(T - 1) * CLASS_COUNT * INSTANCE_COUNT + i * CLASS_COUNT + j];
-            if (p > max_value) {
-                max_value = p;
-                predicted_labels[i] = j;
-            }
-        }
-    }
-    that.predicted_labels = predicted_labels;
-};
-
 // add by Changjian , 2017/7/13
 ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_class) {
     var that = this;
@@ -413,69 +352,7 @@ ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_
     }
 
     that.render_instance_charts(focused_class, that.cluster_label, that.cluster_id, -1, -1);
-    that.cl_canvas.onmousemove = that.canvas_mousemove;
-};
-
-ConfidenceLines.prototype.get_instance_line_chart_one_class_old = function (focused_class) {
-    var that = this;
-
-    that.cl_canvas.onmousemove = null;
-    if (CONFIDENT_LINES_CLUSTER_RESULT_ALL[focused_class]) {
-        var res = CONFIDENT_LINES_CLUSTER_RESULT_ALL[focused_class];
-        that.cluster_label = -1;
-        that.cluster_id = -1;
-        that.cluster_label_set = [];
-        that.cluster_id_set = [];
-        that.focused_segment = 0;
-        that.focused_subsegment = 0;
-
-        that.clustering_res = res["res"];
-        that.clustering_K = res["K"];
-        that.clusters = res["clusters"];
-        that.cluster_conf_lines = res["lines"];
-        that.cluster_final_prob = res["prob"];
-
-        if (EXECUTE_CLASSIFIER_CLUSTERING == true) {
-            that.perform_advanced_clustering_on_trees(focused_class);
-        }
-
-        that.render_instance_charts(focused_class, that.cluster_label, that.cluster_id, -1, -1);
-        that.cl_canvas.onmousemove = that.canvas_mousemove;
-    } else {
-        var loading = add_loading_circle(d3.select("#block-1-4"));
-        retrieve_posterior(focused_class, function () {
-            that.posterior = POSTERIOR_ALL[focused_class];
-            that.posterior_got = true;
-            var T = that.T;
-
-            var instance_charts = [];
-            for (var i = 0; i < INSTANCE_COUNT; i++) {
-                var vec = [];
-                for (var t = 0; t < T; t++) {
-                    vec[t] = that.posterior[t * INSTANCE_COUNT + i];
-                }
-                instance_charts[i] = vec;
-            }
-
-            that.cluster_label = -1;
-            that.cluster_id = -1;
-            that.cluster_label_set = [];
-            that.cluster_id_set = [];
-            that.focused_segment = 0;
-            that.focused_subsegment = 0;
-
-            that.instance_charts = instance_charts;
-            that.perform_clustering_on_instances(focused_class);
-
-            if (EXECUTE_CLASSIFIER_CLUSTERING == true) {
-                that.perform_advanced_clustering_on_trees(focused_class);
-            }
-
-            that.render_instance_charts(focused_class, that.cluster_label, that.cluster_id, -1, -1);
-            that.cl_canvas.onmousemove = that.canvas_mousemove;
-            remove_loading_circle(d3.select("#block-1-4"));
-        });
-    }
+    that.cl_canvas.onmousemove = confidence_lines_mousemove;
 };
 
 ConfidenceLines.prototype.perform_advanced_clustering_on_trees = function (focused_class) {
@@ -556,9 +433,6 @@ ConfidenceLines.prototype.perform_advanced_clustering_on_trees = function (focus
             new_res['medoids'][k] = new_medoid;
         }
 
-        if (DATASET.indexOf("noleaflimit") != -1) {
-            new_res['medoids'][0] = 23;
-        }
         CLASSIFIER_CLUSTERING_RES_ALL[focused_class][CLASSIFIER_CLUSTER_NUMBER] = new_res;
         CLASSIFIER_CLUSTERING_RES = new_res;
         focus_on_class(focused_class);
