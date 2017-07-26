@@ -554,20 +554,6 @@ ConfidenceLines.prototype.perform_clustering_on_instances = function (focused_cl
     return res;
 };
 
-ConfidenceLines.prototype.render_line_chart_for_one_instance = function (vector, mousePos) {
-    var that = this;
-
-    that.cl_context.clearRect(0, 0, that.cl_canvas.width, that.cl_canvas.height);
-
-    that.draw_line_chart_for_one_instance(vector);
-
-    that.draw_dashed_lines();
-    that.draw_horizontal_dashed_lines();
-    that.draw_iteration_text();
-
-    feature_matrix.render_feature_ranking_with_one_instance();
-};
-
 ConfidenceLines.prototype.render_instance_charts = function (focused_class, cluster_label, cluster_id, mousePos, subSegment) {
     var that = this;
 
@@ -641,9 +627,6 @@ ConfidenceLines.prototype.draw_line_charts = function (cluster_label, cluster_id
     var clustering_K = that.clustering_K;
 
     for (var k = 0; k < SELECTED_CLASSES.length; k++) {
-        if (clustering_K[k] == 0) {
-            continue;
-        }
         var conf_lines = that.cluster_conf_lines[k];
 
         for (var i = 0; i < clustering_K[k]; i++) {
@@ -670,7 +653,6 @@ ConfidenceLines.prototype.draw_line_charts = function (cluster_label, cluster_id
                 y = (canvas_height - top_gap - bottom_gap) * (1.0 - conf_lines[i][t]) + top_gap;
                 that.cl_context.lineTo((xleft + xright) / 2, y);
             }
-            //that.cl_context.strokeStyle = hexToRGB(color_manager.get_color(SELECTED_CLASSES[k]), alpha);
             that.cl_context.strokeStyle = (changeColorLightness(color_manager.get_color(SELECTED_CLASSES[k]), alpha));
             that.cl_context.stroke();
 
@@ -749,10 +731,6 @@ ConfidenceLines.prototype.draw_number_bars = function (cluster_label, cluster_id
     var all_final_probs = [];
 
     for (var k = 0; k < SELECTED_CLASSES.length; k++) {
-        if (that.clustering_K[k] == 0) {
-            continue;
-        }
-
         for (var i = 0; i < clustering_K[k]; i++) {
             all_final_probs.push({
                 'cluster_label' : k,

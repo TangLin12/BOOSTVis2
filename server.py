@@ -14,6 +14,7 @@ import webbrowser
 
 from scripts.config import *
 from scripts.algorithm import *
+from scripts.helper import *
 from warehouse import WareHouse
 from scripts.clustering import performClustering
 
@@ -335,7 +336,7 @@ def get_raw_model_iterations():
 
 @app.route('/api/query-dataset', methods=['GET'])
 def query_tag_names():
-    datasets = listdir(join(SERVER_ROOT, "result"))
+    datasets = listdir_sorted_by_date(join(SERVER_ROOT, "result"))
     return jsonify(datasets)
 
 @app.route('/api/query-set-names', methods=['GET'])
