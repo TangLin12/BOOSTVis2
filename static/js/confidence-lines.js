@@ -463,7 +463,6 @@ ConfidenceLines.prototype.get_instance_line_chart_one_class = function (focused_
 
             that.clustering_res = cluster_res;
             that.clustering_K = clustering_K;
-            // TODO :
             that.clusters = cluster;
             that.cluster_conf_lines = cluster_conf_lines;
             that.cluster_final_prob = cluster_final_prob;

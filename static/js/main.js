@@ -188,5 +188,9 @@ $(document).ready(function () {
         recluster_tree_classifier(cluster_number_input.val() - 0);
     });
 
+    $(".hide-positive-instance-link").click(function () {
+        hide_positive_instance_link();
+    });
+
     loading_button.node().click();
 });

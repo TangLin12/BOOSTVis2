@@ -204,3 +204,61 @@ function add_switch_events_for_class_view() {
         //navigation.dehighlight_class();
     });
 }
+
+var show_positive_instances_link = function() {
+    var nodes = tree_inspector.resultTree.baseSvg.selectAll('.node');
+    nodes.each(function(n,i){
+        var node = d3.select(this);
+        var links = node.selectAll("path.restlink");
+        links.style("opacity",function(d,j){
+            if( j != ( n.lineNum_splits.length - 1) ){
+                return 1;
+            }
+            else{
+                return -1;
+            }
+        });
+    });
+};
+
+
+var hide_positive_instance_link = function(){
+    // var nodes = tree_inspector.resultTree.baseSvg.selectAll('.node');
+    // nodes.each(function(n,i){
+    //     var node = d3.select(this);
+    //     var links = node.selectAll("path.restlink");
+    //     links.style("opacity",function(d,j){
+    //         if(  j != ( n.lineNum_splits.length - 1) ) {
+    //             if (n.color_index[j] != n.color_index[n.color_index.length - 1]) {
+    //                 return 0;
+    //             }
+    //             else {
+    //                 return 1;
+    //             }
+    //         }
+    //         else{
+    //             return -1;
+    //         }
+    //     });
+    // });
+    // tree_inspector.resultTree.clearClusters();
+    var focused_class = get_current_focused_class();
+    var split_colors = tree_inspector.resultTree.split_colors;
+    tree_inspector.resultTree.split_colors = [];
+    for( var i = 0; i < split_colors.length; i++ ){
+        if( split_colors[i] != color_manager.get_color(focused_class) ){
+            tree_inspector.resultTree.split_colors.push(split_colors[i]);
+        }
+    }
+    for( var n = 0; n < tree_inspector.resultTree.treeNodeDic.length; n++ ){
+        var tmp_raw_splits = tree_inspector.resultTree.treeNodeDic[n].raw_splits;
+        tree_inspector.resultTree.treeNodeDic[n].raw_splits = [];
+        for( var i = 0; i < split_colors.length; i++ ){
+            if( split_colors[i] != color_manager.get_color(focused_class) ){
+                tree_inspector.resultTree.treeNodeDic[n].raw_splits.push( tmp_raw_splits[i]);
+            }
+        }
+    }
+    tree_inspector.resultTree.applyCluster();
+};
+
