@@ -79,7 +79,7 @@ class AbstractProcessor(ABC):
         bin_widths = []
         data = np.transpose(feature_raw)
         for x in data:
-            dic = algorithm.split_feature(x, bin_count).tolist()
+            dic = algorithm.split_feature(x, bin_count)
             bin_values.append(dic['bin_value'])
             bin_widths.append(dic['bin_width'])
         np.save(join(self.data_root, 'features_split_values_' + str(set_name)), np.array(bin_values))
@@ -175,7 +175,6 @@ class LightGBMProcess(AbstractProcessor):
         cur_iteration = 0
         is_metadata = True
         features = None
-        feature_gain = None
         while line_pos < len(lines):
             # used to skip metadata
             line = lines[line_pos]
@@ -197,10 +196,11 @@ class LightGBMProcess(AbstractProcessor):
                 features = line.replace("split_feature=", "") \
                     .replace("\n", "").split(" ")
             elif line.startswith("split_gain="):
-                feaure_gain = line.replace("split_gain=", "").replace("\n", "").split(" ")
-                for j, f in enumerate(features):
-                    g = float(feaure_gain[j])
-                    feature_gains[cur_class][int(f)] += g / normalizer
+                feature_gain = line.replace("split_gain=", "").replace("\n", "").split(" ")
+                if feature_gain[-1] != '':
+                    for j, f in enumerate(features):
+                        g = float(feature_gain[j])
+                        feature_gains[cur_class][int(f)] += g / normalizer
 
             line_pos += 1
         return {
