@@ -70,6 +70,7 @@ var click_class = function (label) {
     confidence_lines.focused_class = label;
     confidence_lines.get_instance_line_chart(label);
     feature_matrix.render_feature_ranking();
+    $("#self-column-3").css("opacity", 1);
 
     // add by Changjian,
     if (USING_CLASSIFIER) {

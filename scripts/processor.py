@@ -79,7 +79,7 @@ class AbstractProcessor(ABC):
         bin_widths = []
         data = np.transpose(feature_raw)
         for x in data:
-            dic = algorithm.split_feature(x, bin_count).tolist()
+            dic = algorithm.split_feature(x, bin_count)
             bin_values.append(dic['bin_value'])
             bin_widths.append(dic['bin_width'])
         np.save(join(self.data_root, 'features_split_values_' + str(set_name)), np.array(bin_values))

@@ -359,7 +359,8 @@ ConfidenceLines.prototype.get_instance_line_chart = function (focused_class) {
     var that = this;
 
     that.container
-        .style("opacity", 1);
+        .style("opacity", 1)
+        .style("display", "block");
 
     that.activated = true;
     that.mode = that.clusterMode;
