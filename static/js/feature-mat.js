@@ -230,6 +230,10 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
     }
 };
 
+FeatureMatrix.prototype.display = function () {
+
+};
+
 FeatureMatrix.prototype.render_feature_ranking = function () {
     $('#ranking-hint').css('display', 'inline');
 
