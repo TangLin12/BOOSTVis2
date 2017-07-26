@@ -17,7 +17,10 @@ from scripts.algorithm import *
 from warehouse import WareHouse
 from scripts.clustering import performClustering
 
-SERVER_ROOT = getcwd()
+
+SERVER_ROOT = os.path.dirname(sys.modules[__name__].__file__)
+
+
 warehouse = None
 app = Flask(__name__, static_url_path="/static")
 
@@ -41,6 +44,9 @@ def get_confusion_matrix():
 # add by Shouxing, 2017 / 7 / 20
 @app.route('/api/feature_matrix_for_cluster', methods=['GET'])
 def get_feature_matrix_for_cluster():
+    dataset_identifier = request.args["dataset"]
+    if dataset_identifier[0] == '\"' and dataset_identifier[-1] == '\"':
+        dataset_identifier = dataset_identifier[1:-1]
     cluster_ids = json.loads(request.args.get('cluster_ids'))
     class_id = json.loads(request.args.get('class_id'))
     cluster_classes = json.loads(request.args.get('cluster_classes'))
@@ -48,9 +54,8 @@ def get_feature_matrix_for_cluster():
     set_type = json.loads(request.args.get('set_type'))
     current_module = sys.modules[__name__]
     project_root = os.path.dirname(current_module.__file__)
-    project_root = join(project_root, 'result', 'result-test')
-    feature_raw_info = np.load(join(project_root, 'feature-raw-' + str(set_type) + '.npy'))
-    feature_raw = feature_raw_info.tolist()['X']
+    project_root = join(project_root, 'result', dataset_identifier)
+    feature_raw = np.load(join(project_root, 'feature-raw-' + str(set_type) + '.npy'))
     size = len(cluster_ids)
     features_split_values = np.load(join(project_root, 'features_split_values_' + str(set_type) + '.npy'))
     features_split_widths = np.load(join(project_root, 'features_split_widths_' + str(set_type) + '.npy'))
@@ -78,13 +83,14 @@ def get_feature_matrix_for_cluster():
 def get_feature_matrix_for_class():
     total = time.time()
     dataset_identifier = request.args["dataset"]
+    if dataset_identifier[0] == '\"' and dataset_identifier[-1] == '\"':
+        dataset_identifier = dataset_identifier[1:-1]
     class_id = json.loads(request.args.get('class_id'))
     features = json.loads(request.args.get('features'))
     set_type = json.loads(request.args.get('set_type'))
     current_module = sys.modules[__name__]
     project_root = os.path.dirname(current_module.__file__)
     project_root = join(project_root, 'result', dataset_identifier)
-    feature_raw_info = np.load(join(project_root, 'feature-raw-' + set_type + '.npy'))
     feature_raw = np.load(join(project_root, "feature-raw-" + set_type + ".npy"))
     instance_labels = np.load(join(project_root, "label-" + set_type + ".npy"))
     features_split_values = np.load(join(project_root, 'features_split_values_' + str(set_type) + '.npy'))
@@ -103,7 +109,7 @@ def get_feature_matrix_for_class():
     count = 0
     for feature_id in features:
         bins = features_split_values[feature_id]
-        widths.append(features_split_widths[feature_id].tolist())
+        widths.append(features_split_widths[feature_id])
         row = []
         for i in range(2):
             feature_values = [feature_raw[instance_id][feature_id] for instance_id in class_instance_ids[i]]
@@ -122,14 +128,16 @@ def get_feature_matrix_for_class():
 # add by Shouxing, 2017 / 7 / 20
 @app.route('/api/bin_exist_for_instance', methods=['GET'])
 def get_bin_exist_for_instance():
+    dataset_identifier = request.args["dataset"]
+    if dataset_identifier[0] == '\"' and dataset_identifier[-1] == '\"':
+        dataset_identifier = dataset_identifier[1:-1]
     instance_id = json.loads(request.args.get('instance_id'))
     features = json.loads(request.args.get('features'))
     set_type = json.loads(request.args.get('set_type'))
     current_module = sys.modules[__name__]
     project_root = os.path.dirname(current_module.__file__)
-    project_root = join(project_root, 'result', 'result-test')
-    feature_raw_info = np.load(join(project_root, 'feature-raw-' + str(set_type) + '.npy'))
-    feature_raw = feature_raw_info.tolist()['X']
+    project_root = join(project_root, 'result', dataset_identifier)
+    feature_raw = np.load(join(project_root, 'feature-raw-' + str(set_type) + '.npy'))
     features_split_values = np.load(join(project_root, 'features_split_values_' + str(set_type) + '.npy'))
 
     bins_instance = []
@@ -340,7 +348,7 @@ def query_set_names():
             "status": "failure"
         })
     with open(manifest_path) as manifest_file:
-        manifest = json.load(manifest_file)
+        manifest = json.loads(manifest_file.read())
         return jsonify({
             "status": "success",
             "set_names": manifest["set_names"]

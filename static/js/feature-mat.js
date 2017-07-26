@@ -132,7 +132,6 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
 
     var bin_matrix = that.binMatrix;
     var bin_widths = that.binWidths;
-    console.log(bin_widths);
     var features = that.features;
     var feature_number = features.length;
     var start = that.featureStart;
@@ -244,10 +243,12 @@ FeatureMatrix.prototype.render_feature_ranking = function () {
     that.features = features;
 
     // add by Shouxing 2017/7/23
+    var data_set = document.getElementById(DATASET_SELECTOR).value;
     $.getJSON('/api/feature_matrix_for_class', {
+            dataset: JSON.stringify(data_set),
             class_id: JSON.stringify(get_current_focused_class()),
             features: JSON.stringify(feature_matrix.features),
-            set_type: JSON.stringify(SETTYPE)
+            set_type: JSON.stringify(document.getElementById('set-select').value)
         }, function(data) {
             feature_matrix.binMatrix = data.feature_matrix;
             feature_matrix.binWidths = data.feature_widths;
@@ -401,10 +402,12 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance = function () {
     that.mode = that.importanceMode;
     // add by Shouxing 2017/7/23
     // get bins instance
+    var data_set = document.getElementById(DATASET_SELECTOR).value;
     $.getJSON('/api/bin_exist_for_instance', {
+            dataset: JSON.stringify(data_set),
             instance_id: JSON.stringify(confidence_lines.focused_instance),
             features: JSON.stringify(feature_matrix.features),
-            set_type: JSON.stringify(SETTYPE)
+            set_type: JSON.stringify(document.getElementById('set-select').value)
         }, function(data) {
             feature_matrix.binsInstance = data.bins_instance;
             that.currentFrame = 0;
@@ -562,12 +565,14 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters = function () {
     that.features = features;
     // add by Shouxing 2017/7/23
     // get feature matrix and feature widths
+    var data_set = document.getElementById(DATASET_SELECTOR).value;
     $.getJSON('/api/feature_matrix_for_cluster', {
+            dataset: JSON.stringify(data_set),
             class_id: JSON.stringify(get_current_focused_class()),
             cluster_ids: JSON.stringify(confidence_lines.cluster_id_set),
             cluster_classes: JSON.stringify(confidence_lines.cluster_label_set),
             features: JSON.stringify(feature_matrix.features),
-            set_type: JSON.stringify(SETTYPE)
+            set_type: JSON.stringify(document.getElementById('set-select').value)
         }, function(data) {
             console.log(data);
             feature_matrix.binMatrix = data.feature_matrix;
@@ -719,12 +724,14 @@ FeatureMatrix.prototype.render_separation_features_for_clusters = function () {
     that.features = features;
     // add by Shouxing 2017/7/23
     // get feature matrix and feature widths
+    var data_set = document.getElementById(DATASET_SELECTOR).value;
     $.getJSON('/api/feature_matrix_for_cluster', {
+            dataset: JSON.stringify(data_set),
             class_id: JSON.stringify(get_current_focused_class()),
             cluster_ids: JSON.stringify(confidence_lines.cluster_id_set),
             cluster_classes: JSON.stringify(confidence_lines.cluster_label_set),
             features: JSON.stringify(feature_matrix.features),
-            set_type: JSON.stringify(SETTYPE)
+            set_type: JSON.stringify(document.getElementById('set-select').value)
         }, function(data) {
             console.log(data);
             feature_matrix.binMatrix = data.feature_matrix;
