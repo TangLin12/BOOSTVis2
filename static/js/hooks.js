@@ -2,11 +2,6 @@
  * Created by Derek Xiao on 2017/2/8.
  */
 
-var on_timepoint_highlight = function (p) {
-    $("#iteration-indicator").text(p);
-    navigation.on_instance_timepoint_highlight(p);
-};
-
 var show_tree_classifier = function (iteration, class_) {
     class_ = class_ || confidence_lines.focused_class;
     iteration = Math.max(iteration, 0);
@@ -26,11 +21,17 @@ var recluster_tree_classifier = function (number) {
 
 // add by Changjian, this funcion
 var clear_tree_view_header_indicator = function () {
+    if (!USING_CLASSIFIER) {
+        return;
+    }
     $("#tree-iteration-indicator").val("-1");
     $("#tree-class-indicator").text("-");
 };
 
 var update_tree_view_header_indicator = function (iteration, class_) {
+    if (!USING_CLASSIFIER) {
+        return;
+    }
     $("#tree-iteration-indicator").val((iteration - - 1));
     $("#tree-class-indicator").text("C" + (class_ - - 1))
         .css("color", "grey");
@@ -41,78 +42,51 @@ var is_instance_mode = function () {
                     && confidence_lines.mode == confidence_lines.instanceMode);
 };
 
+var tree_list_highlight = function (tree_index, class_) {
+    if (!USING_CLASSIFIER) {
+        return;
+    }
+    tree_list.highlight_representative_tree(tree_index, class_);
+};
+
 var get_current_focused_class = function () {
     return confidence_lines.focused_class;
 };
 
-var tree_list_highlight = function (tree_index, class_) {
-    tree_list.highlight_representative_tree(tree_index, class_);
-};
-
 var focus_on_class = function (focused_class) {
-    // add by Changjian, 2017/7/18
-    tree_list.show_tree_list(focused_class);
+    if (USING_CLASSIFIER) {
+        // add by Changjian, 2017/7/18
+        tree_list.show_tree_list(focused_class);
+    }
     class_selector.highlight_class(confusion_matrix.reverse_ranking[focused_class]);
 };
 
-var check_loading_status = function () {
-    var all_loaded = true;
-    for (var key in LOADING_STATUS) {
-        if (LOADING_STATUS[key] != 1) {
-            all_loaded = false;
-            return;
-        }
-    }
-    preloader.hide();
+var confidence_lines_mousedown = function (e) {
+    var loc = windowToCanvas(this, e.clientX, e.clientY);
+    e.preventDefault();
+    confidence_lines.canvas_mousedown(loc, this);
 };
 
-var update_clustering_K = function (focused_class) {
-    CLUSTERING_K = [];
-    for (var i = 0; i < SELECTED_CLASSES.length; i++) {
-        CLUSTERING_K[i] = CLUSTERING_K_MATRIX[focused_class][SELECTED_CLASSES[i]];
-    }
+var confidence_lines_mousemove = function (e) {
+    var loc = windowToCanvas(this, e.clientX, e.clientY);
+    e.preventDefault();
+    confidence_lines.canvas_mousemove(loc, this);
+};
+
+var confidence_lines_mouseout = function (e) {
+    confidence_lines.canvas_mouseout();
 };
 
 var click_class = function (label) {
     confidence_lines.focused_class = label;
-    // clearup
-
-    //tree_inspector.draw_tree(0, label);
-    update_clustering_K(label);
     confidence_lines.get_instance_line_chart(label);
     feature_matrix.render_feature_ranking();
-    //tree_list_update(SELECTED_CLASSES[i]);
+    $("#self-column-3").css("opacity", 1);
 
     // add by Changjian,
-    treesize_barchart.render_tree_size_bar_chart(label);
-    tree_inspector.clear_clusters();
-    switch_to_confidence_lines();
-};
-
-var retrieve_posterior = function (class_, callback) {
-    console.log("request posterior", class_);
-    if (POSTERIOR_ALL[class_]) {
-        callback(POSTERIOR_ALL[class_]);
-    } else {
-        var task = "/api/posterior-by-class" + PARAMS + "&class_=" + class_;
-        var oReq = new XMLHttpRequest();
-        oReq.open("GET", task, true);
-        oReq.responseType = "arraybuffer";
-        oReq.setRequestHeader("cache-control", "no-cache");
-
-        oReq.onload = function (oEvent) {
-            LOADING_STATUS["posterior"] = 1;
-            check_loading_status();
-            var arrayBuffer = oReq.response;
-            if (arrayBuffer) {
-                var byteArray = new Float32Array(arrayBuffer);
-
-                POSTERIOR_ALL[class_] = byteArray;
-
-                callback(POSTERIOR_ALL[class_]);
-            }
-        };
-        oReq.send(null);
+    if (USING_CLASSIFIER) {
+        treesize_barchart.render_tree_size_bar_chart(label);
+        tree_inspector.clear_clusters();
     }
 };
 
@@ -129,9 +103,6 @@ var retrieve_clustering = function( class_, callback){
         oReq.responseType = "arraybuffer";
         oReq.setRequestHeader("cache-control", "no-cache");
         oReq.onload = function(oEvent){
-            LOADING_STATUS["clustering"] = 1;
-            //TODO:
-            check_loading_status();
             var arrayBuffer = oReq.response;
             if( arrayBuffer){
                 var byteArray = new Float32Array(arrayBuffer);
@@ -165,44 +136,15 @@ var remove_loading_circle = function (container) {
     container.selectAll(".preloader-wrapper").remove();
 };
 
-function switch_to_confusion_matrix() {
-    //$('#conf-mat').css('display', 'block');
-    //$('#confidence-lines').css('display', 'none');
-    //$('#back-button').css('display', 'none');
-    confusion_matrix.container.attr("data-hint", "click one strip to investigate the class")
-        .attr("data-position", "right");
-    confidence_lines.container.attr("data-hint", null)
-        .attr("data-position", "right");
-}
+function add_options(target, options) {
+    var select = document.getElementById(target);
 
-function switch_to_confidence_lines() {
-    //$('#conf-mat').css('display', 'none');
-    $('#confidence-lines').css('display', 'block');
-    //$('#back-button').css('display', 'inline');
-    confusion_matrix.container
-        .attr("data-hint", null)
-        .attr("data-position", null);
-    confidence_lines.container.attr("data-hint", "click one bar on the right to investigate the cluster")
-        .attr("data-position", "right");
-    d3.select("#self-column-3")
-        .style("opacity", 1);
-    d3.select("#self-column-2")
-        .style("opacity", 1);
-}
-
-function add_switch_events_for_class_view() {
-    $('#back-button').on('mouseover', function() {
-        $(this).css({
-            'color': 'black',
-            'cursor': 'pointer'
-        });
-    }).on('mouseout', function() {
-        $(this).css('color', 'gray');
-    }).click(function() {
-        confidence_lines.activated = false;
-        switch_to_confusion_matrix();
-        //navigation.dehighlight_class();
-    });
+    for (var i = 0; i < options.length; i++){
+        var opt = document.createElement('option');
+        opt.value = options[i];
+        opt.innerHTML = options[i];
+        select.appendChild(opt);
+    }
 }
 
 var show_positive_instances_link = function() {

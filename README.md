@@ -8,6 +8,7 @@ Integrate BOOSTVis with LightGBM, seemlessly connect the training process and vi
 * flask
 * numpy
 * configparser
+* pandas
 
 ## Installation
 1. Extract [demo dataset](http://166.111.80.151:8081/boostvis/lightgbm-otto-8-0.1-800.zip) to directory *result*

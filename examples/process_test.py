@@ -1,4 +1,8 @@
+import numpy as np
 import lightgbm as lgb
+from os.path import join
+import pandas as pd
+import os
 from scripts import processor
 import pandas as pd
 import os
@@ -40,7 +44,9 @@ def load_otto():
 				}
 		}
 
-def load_toy1():
+from sklearn.model_selection import StratifiedShuffleSplit
+
+def load_toy1() -> object:
 	# load or create your dataset
 	print('Load data...')
 	df_train = pd.read_csv('multiclass_classification/multiclass.train', header=None, sep='\t')
@@ -64,6 +70,7 @@ def load_toy1():
 
 def LightGBMTest():
 	dataset = load_otto()
+	label = dataset["train"]["y"]
 	lgb_train = lgb.Dataset(dataset["train"]["X"], dataset["train"]["y"])
 	lgb_valid = lgb.Dataset(dataset["valid"]["X"], dataset["valid"]["y"])
 
@@ -81,7 +88,7 @@ def LightGBMTest():
 		'bagging_freq': 5,
 		'verbose': 0,
 		'num_boost_round': 100,
-		'num_class': 5
+		'num_class': len(np.unique(label))
 	}
 
 	booster = lgb.train(params,

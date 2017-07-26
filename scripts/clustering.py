@@ -50,10 +50,10 @@ def kmeans_clustering(score, k):
 	cluster_size = np.bincount(labels).tolist()
 	return centroids, labels, cluster_size
 
-def instance_clustering(class_count, scores, set, decision):
+def instance_clustering(scores, set, decision):
 	y = set["y"]
 	X = set["X"]
-	data_count = X.shape[0]
+	data_count, time_series_length, class_count = scores.shape
 	clustering_result = {}
 	for i in range(class_count):
 		res = []
@@ -87,13 +87,13 @@ def instance_clustering(class_count, scores, set, decision):
 			})
 			K.append(k)
 			clusters_by_class = []
-			line_by_class = np.array([])
+			line_by_class = np.zeros(shape=(len(centroids), time_series_length))
 			prob_by_class = []
 			for c in range(len(centroids)):
 				cluster_instance_index = np.array(instance_index_j)[np.array(labels) == c]
 				clusters_by_class.append(cluster_instance_index.tolist())
-				line_by_class = np.mean(scores[cluster_instance_index][:, :, i], axis=0)
-				prob_by_class.append(line_by_class[-1])
+				line_by_class[c, :] = np.mean(scores[cluster_instance_index][:, :, i], axis=0)
+				prob_by_class.append(line_by_class[c, -1])
 			clusters.append(clusters_by_class)
 			lines.append(line_by_class.tolist())
 			prob.append(prob_by_class)

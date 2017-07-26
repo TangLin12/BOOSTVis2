@@ -1,7 +1,7 @@
 # coding: utf-8
 
 import json
-from os.path import join
+from os.path import join, exists
 import numpy as np
 
 
@@ -10,17 +10,23 @@ class WareHouse(object):
     manifest = {}
     cluster_2_instance_map = {}
     feature_raw_map = {}
+    _identifier = ""
 
-    def __init__(self, root_dir):
+    def __init__(self, identifier, root_dir):
+        self._identifier = identifier
         with open(join(root_dir, "manifest")) as manifest_file:
-            self.manifest = json.load(manifest_file.read())
+            self.manifest = json.loads(manifest_file.read())
             self.set_names = self.manifest["set_names"]
         for name in self.set_names:
             with open(join(root_dir, "clustering_result_" + name + ".json")) as cluster_result_file:
-                self.cluster_2_instance_map[name] = json.load(cluster_result_file.read())
+                self.cluster_2_instance_map[name] = json.loads(cluster_result_file.read())
             self.feature_raw_map[name] = np.load(join(root_dir, "feature-raw-" + name + ".npy"))
 
-    def get_feature_by_cluster(self, set_name, selected_class, cluster_class, cluster_id):
+    @property
+    def identifier(self):
+        return self._identifier
+
+    def get_instances_by_cluster(self, set_name, selected_class, cluster_class, cluster_id):
         """
         Parameters
         ----------
@@ -35,8 +41,9 @@ class WareHouse(object):
 
         Returns
         -------
-        feature_matrix : numpy 2-D array with shape (instance, feature)
+        instance_ids : list with shape (instance, )
         """
 
-        cluster_instance_index = self.cluster_2_instance_map[set_name][selected_class]["clusters"][cluster_class][cluster_id]
-        return self.feature_raw_map[set_name][cluster_instance_index]
+        clusters = self.cluster_2_instance_map[set_name][str(selected_class)]["clusters"]
+        cluster_instance_index = clusters[cluster_class][cluster_id]
+        return cluster_instance_index

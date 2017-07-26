@@ -109,7 +109,6 @@ TreeInspector_svg.prototype.draw_next_tree = function () {
         }
         that.draw_tree(that.iteration + 1, that.class_);
         //that.draw_next_tree(that.iteration - 2);
-        on_timepoint_highlight(that.iteration - 2);
     }
 };
 
@@ -120,8 +119,6 @@ TreeInspector_svg.prototype.draw_prev_tree = function () {
             return;
         }
         that.draw_tree(that.iteration - 1, that.class_);
-        //that.on_instance_timepoint_highlight(that.iteration - 4);
-        on_timepoint_highlight(that.iteration - 2);
     }
 };
 

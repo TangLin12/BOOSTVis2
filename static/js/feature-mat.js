@@ -10,14 +10,7 @@ function FeatureMatrix(container) {
     that.width = bbox.width;
     that.height = bbox.height;
 
-    //if (that.container.children) {
-    //    that.container.children.remove();
-    //}
     that.container.select("canvas").remove();
-    //that.container
-    //    .transition()
-    //    .duration(500)
-    //    .style("opacity", 0);
     that.scale = 1;
     this.fh_canvas = this.container.append("canvas")
         .attr("width", that.width * that.scale)
@@ -120,45 +113,6 @@ FeatureMatrix.prototype.get_used_features = function () {
     return tree_inspector.resultTree.get_drawn_node_features();
 };
 
-// add by Shouxing, 2017 / 7 / 20
-FeatureMatrix.prototype.update_bin_format_for_cluster = function () {
-    $.getJSON('/api/feature_matrix_for_cluster', {
-            cluster_ids: JSON.stringify(confidence_lines.cluster_id_set),
-            cluster_classes: JSON.stringify(confidence_lines.cluster_label_set),
-            features: JSON.stringify(feature_matrix.features)
-        }, function(data) {
-            console.log(data);
-            feature_matrix.binMatrix = data.feature_matrix;
-            feature_matrix.binWidths = data.feature_widths;
-        }
-    );
-};
-
-// add by Shouxing, 2017 / 7 / 20
-FeatureMatrix.prototype.update_bin_format = function () {
-    $.getJSON('/api/feature_matrix_for_class', {
-            class_id: JSON.stringify(get_current_focused_class()),
-            features: JSON.stringify(feature_matrix.features)
-        }, function(data) {
-            console.log(data);
-            feature_matrix.binMatrix = data.feature_matrix;
-            feature_matrix.binWidths = data.feature_widths;
-        }
-    );
-};
-
-// add by Shouxing, 2017 / 7 / 20
-FeatureMatrix.prototype.get_bin_exist_for_instance = function () {
-    $.getJSON('/api/bin_exist_for_instance', {
-            instance_id: JSON.stringify(confidence_lines.focused_instance),
-            features: JSON.stringify(feature_matrix.features)
-        }, function(data) {
-            console.log(data);
-            feature_matrix.binsInstance = data.bins_instance;
-        }
-    );
-};
-
 FeatureMatrix.prototype.render_feature_ranking_partially = function () {
     var that = feature_matrix;
 
@@ -178,7 +132,6 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
 
     var bin_matrix = that.binMatrix;
     var bin_widths = that.binWidths;
-
     var features = that.features;
     var feature_number = features.length;
     var start = that.featureStart;
@@ -240,7 +193,7 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
             var xleft = Math.round(bar_width * percent_begin / 100);
             var xright = Math.round(bar_width * (percent_begin + bin_widths[k][i]) / 100);
             var xmid = Math.round((xleft + xright) / 2);
-            var single_bar_width = Math.round((xright - xleft) / 8);
+            var single_bar_width = Math.round((xright - xleft) * 7 / 16);
 
             that.fh_context.fillStyle = hexToRGB(color_manager.get_color(focused_class));
             that.fh_context.fillRect(xmid + text_width, ybottom - focus_bin_height, single_bar_width, focus_bin_height);
@@ -277,6 +230,10 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
     }
 };
 
+FeatureMatrix.prototype.display = function () {
+
+};
+
 FeatureMatrix.prototype.render_feature_ranking = function () {
     $('#ranking-hint').css('display', 'inline');
 
@@ -288,10 +245,22 @@ FeatureMatrix.prototype.render_feature_ranking = function () {
         features.push(that.sorted_features[k + that.featureStart]['id']);
     }
     that.features = features;
-    that.update_bin_format();
-    that.mode = that.importanceMode;
-    that.currentFrame = 0;
-    window.requestAnimationFrame(that.render_feature_ranking_partially);
+
+    // add by Shouxing 2017/7/23
+    var data_set = document.getElementById(DATASET_SELECTOR).value;
+    $.getJSON('/api/feature_matrix_for_class', {
+            dataset: JSON.stringify(data_set),
+            class_id: JSON.stringify(get_current_focused_class()),
+            features: JSON.stringify(feature_matrix.features),
+            set_type: JSON.stringify(document.getElementById('set-select').value)
+        }, function(data) {
+            feature_matrix.binMatrix = data.feature_matrix;
+            feature_matrix.binWidths = data.feature_widths;
+            that.mode = that.importanceMode;
+            that.currentFrame = 0;
+            window.requestAnimationFrame(that.render_feature_ranking_partially);
+        }
+    );
 };
 
 FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = function () {
@@ -382,7 +351,7 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = fun
             var xleft = Math.round(bar_width * percent_begin / 100);
             var xright = Math.round(bar_width * (percent_begin + bin_widths[k][i]) / 100);
             var xmid = Math.round((xleft + xright) / 2);
-            var single_bar_width = Math.round((xright - xleft) / 8);
+            var single_bar_width = Math.round((xright - xleft) * 7 / 16);
 
             if (bins_instance[k][i] > 0) {
                 that.fh_context.fillStyle = hexToRGB(color_manager.get_color(TRUE_LABELS[index]), 0.3);
@@ -435,9 +404,20 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance = function () {
     }
     that.features = features;
     that.mode = that.importanceMode;
-    that.update_bin_format();
-    that.currentFrame = 0;
-    window.requestAnimationFrame(that.render_feature_ranking_with_one_instance_partially);
+    // add by Shouxing 2017/7/23
+    // get bins instance
+    var data_set = document.getElementById(DATASET_SELECTOR).value;
+    $.getJSON('/api/bin_exist_for_instance', {
+            dataset: JSON.stringify(data_set),
+            instance_id: JSON.stringify(confidence_lines.focused_instance),
+            features: JSON.stringify(feature_matrix.features),
+            set_type: JSON.stringify(document.getElementById('set-select').value)
+        }, function(data) {
+            feature_matrix.binsInstance = data.bins_instance;
+            that.currentFrame = 0;
+            window.requestAnimationFrame(that.render_feature_ranking_with_one_instance_partially);
+        }
+    );
 };
 
 FeatureMatrix.prototype.render_feature_ranking_for_clusters_partially = function () {
@@ -504,6 +484,7 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters_partially = function
             sum_bin[j] = 0;
         }
         for (var i = 0;i < cluster_count; i++) {
+            transformed_bin_collec[i] = [];
             for (var j = 0;j < bin_number; j++) {
                 transformed_bin_collec[i][j] = Math.pow(bin_matrix[k][i][j], 0.3);
                 sum_bin[i] += transformed_bin_collec[i][j];
@@ -521,14 +502,15 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters_partially = function
         for (var i = 0;i < bin_number; i++) {
             var xleft = Math.round(bar_width * percent_begin / 100);
             var xright = Math.round(bar_width * (percent_begin + bin_widths[k][i]) / 100);
+            percent_begin += bin_widths[k][i];
             var xmid = Math.round((xleft + xright) / 2);
-            var single_bar_width = Math.round((xright - xleft) / 8);
+            var single_bar_width = Math.round((xright - xleft) * 7 / 8 / cluster_count);
             var bin_height = [];
             var bin_xleft = [];
             var bin_xright = [];
 
             for (j = 0; j < cluster_count; j++) {
-                bin_height[j] = transformed_bin_collec[i][j] / max_bin * (ybottom - ytop - 5 * that.scale);
+                bin_height[j] = transformed_bin_collec[j][i] / max_bin * (ybottom - ytop - 5 * that.scale);
                 bin_height[j] = bin_height[j] * (that.currentFrame / that.totalFrames);
                 bin_xleft[j] = xmid + (j - cluster_count / 2) * single_bar_width;
                 bin_xright[j] = bin_xleft[j] + single_bar_width;
@@ -585,11 +567,25 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters = function () {
         features.push(that.sorted_features[k + that.featureStart]['id']);
     }
     that.features = features;
-    that.update_bin_format_for_cluster();
-
-    that.mode = that.importanceMode;
-    that.currentFrame = 0;
-    window.requestAnimationFrame(that.render_feature_ranking_for_clusters_partially);
+    // add by Shouxing 2017/7/23
+    // get feature matrix and feature widths
+    var data_set = document.getElementById(DATASET_SELECTOR).value;
+    $.getJSON('/api/feature_matrix_for_cluster', {
+            dataset: JSON.stringify(data_set),
+            class_id: JSON.stringify(get_current_focused_class()),
+            cluster_ids: JSON.stringify(confidence_lines.cluster_id_set),
+            cluster_classes: JSON.stringify(confidence_lines.cluster_label_set),
+            features: JSON.stringify(feature_matrix.features),
+            set_type: JSON.stringify(document.getElementById('set-select').value)
+        }, function(data) {
+            console.log(data);
+            feature_matrix.binMatrix = data.feature_matrix;
+            feature_matrix.binWidths = data.feature_widths;
+            that.mode = that.importanceMode;
+            that.currentFrame = 0;
+            window.requestAnimationFrame(that.render_feature_ranking_for_clusters_partially);
+        }
+    );
 };
 
 FeatureMatrix.prototype.render_separation_features_for_clusters_partially = function () {
@@ -670,7 +666,7 @@ FeatureMatrix.prototype.render_separation_features_for_clusters_partially = func
             var xleft = Math.round(bar_width * percent_begin / 100);
             var xright = Math.round(bar_width * (percent_begin + bin_widths[feature_id][i]) / 100);
             var xmid = Math.round((xleft + xright) / 2);
-            var single_bar_width = Math.round((xright - xleft) / 8);
+            var single_bar_width = Math.round((xright - xleft) * 7 / 8 / cluster_count);
             var bin_height = [];
             var bin_xleft = [];
             var bin_xright = [];
@@ -730,43 +726,58 @@ FeatureMatrix.prototype.render_separation_features_for_clusters = function () {
         features[i] = i;
     }
     that.features = features;
-    that.update_bin_format_for_cluster();
-    that.mode = that.separationMode;
+    // add by Shouxing 2017/7/23
+    // get feature matrix and feature widths
+    var data_set = document.getElementById(DATASET_SELECTOR).value;
+    $.getJSON('/api/feature_matrix_for_cluster', {
+            dataset: JSON.stringify(data_set),
+            class_id: JSON.stringify(get_current_focused_class()),
+            cluster_ids: JSON.stringify(confidence_lines.cluster_id_set),
+            cluster_classes: JSON.stringify(confidence_lines.cluster_label_set),
+            features: JSON.stringify(feature_matrix.features),
+            set_type: JSON.stringify(document.getElementById('set-select').value)
+        }, function(data) {
+            console.log(data);
+            feature_matrix.binMatrix = data.feature_matrix;
+            feature_matrix.binWidths = data.feature_widths;
+            that.mode = that.separationMode;
 
-    var bin_matrix = that.binMatrix;
-    var bin_widths = that.binWidths;
+            var bin_matrix = that.binMatrix;
+            var bin_widths = that.binWidths;
 
-    var separation_power = [];
-    var sorted_features = [];
-    for (k = 0; k < FEATURE_COUNT; k++) {
-        separation_power[k] = 0;
-        var total_bin_sum = 0;
-        var bin_number = bin_widths[k].length;
-        for (i = 0; i < bin_number; i++) {
-            var bin_sum = 0;
-            for (j = 0; j < cluster_count; j++) {
-                bin_sum += bin_matrix[k][j][i];
+            var separation_power = [];
+            var sorted_features = [];
+            for (k = 0; k < FEATURE_COUNT; k++) {
+                separation_power[k] = 0;
+                var total_bin_sum = 0;
+                var bin_number = bin_widths[k].length;
+                for (i = 0; i < bin_number; i++) {
+                    var bin_sum = 0;
+                    for (j = 0; j < cluster_count; j++) {
+                        bin_sum += bin_matrix[k][j][i];
+                    }
+                    if (bin_sum == 0) {
+                        continue;
+                    }
+                    for (j = 0; j < cluster_count; j++) {
+                        separation_power[k] += bin_matrix[k][j][i] * bin_matrix[k][j][i] / bin_sum;
+                    }
+                    total_bin_sum += bin_sum;
+                }
+                sorted_features[k] = {
+                    'id' : k,
+                    'value' : separation_power[k] / total_bin_sum
+                };
             }
-            if (bin_sum == 0) {
-                continue;
-            }
-            for (j = 0; j < cluster_count; j++) {
-                separation_power[k] += bin_matrix[k][j][i] * bin_matrix[k][j][i] / bin_sum;
-            }
-            total_bin_sum += bin_sum;
+            sorted_features = _.sortBy(sorted_features, function(obj){
+                return -obj['value'];
+            });
+            that.sorted_features = sorted_features;
+
+            that.currentFrame = 0;
+            window.requestAnimationFrame(that.render_separation_features_for_clusters_partially);
         }
-        sorted_features[k] = {
-            'id' : k,
-            'value' : separation_power[k] / total_bin_sum
-        };
-    }
-    sorted_features = _.sortBy(sorted_features, function(obj){
-        return -obj['value'];
-    });
-    that.sorted_features = sorted_features;
-
-    that.currentFrame = 0;
-    window.requestAnimationFrame(that.render_separation_features_for_clusters_partially);
+    );
 };
 
 FeatureMatrix.prototype.get_average_feature_importance = function (focused_class) {
