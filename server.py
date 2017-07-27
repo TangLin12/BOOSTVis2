@@ -82,7 +82,6 @@ def get_feature_matrix_for_cluster():
 # add by Shouxing, 2017 / 7 / 20
 @app.route('/api/feature_matrix_for_class', methods=['GET'])
 def get_feature_matrix_for_class():
-    total = time.time()
     dataset_identifier = request.args["dataset"]
     if dataset_identifier[0] == '\"' and dataset_identifier[-1] == '\"':
         dataset_identifier = dataset_identifier[1:-1]
@@ -107,7 +106,6 @@ def get_feature_matrix_for_class():
     feature_matrix = []
     widths = []
     get_distribution = 0
-    count = 0
     for feature_id in features:
         bins = features_split_values[feature_id]
         widths.append(features_split_widths[feature_id].tolist())
@@ -119,8 +117,6 @@ def get_feature_matrix_for_class():
             get_distribution += time.time()
             row.append(distribution)
         feature_matrix.append(row)
-    print('total', 'get_distribution')
-    print(float(time.time() - total), float(get_distribution), count)
     return jsonify({
         'feature_matrix': feature_matrix,
         'feature_widths': widths
@@ -365,8 +361,7 @@ def get_cluster_result():
     return send_file(cluster_result_path)
 
 def start_server(port=API_SERVER_PORT):
-    if not DEBUG:
-        webbrowser.open("http://localhost:" + str(port) + "/static/index.html", autoraise=True)
+    webbrowser.open("http://localhost:" + str(port) + "/static/index.html", autoraise=True)
     app.run(port=port, host="0.0.0.0", threaded=True)
 
 if __name__ == '__main__':
