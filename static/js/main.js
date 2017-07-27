@@ -58,5 +58,5 @@ $(document).ready(function () {
         hide_positive_instance_link();
     });
 
-    loading_button.node().click();
+    //loading_button.node().click();
 });
