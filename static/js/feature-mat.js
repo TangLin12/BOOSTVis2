@@ -184,8 +184,8 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
         }
 
         var single_space_width = 0.05 * bar_width;
-        var x_begin = single_space_width;
-        var true_bar_width = bar_width - single_space_width * (bin_number - 1);
+        var x_begin = single_space_width / 2;
+        var true_bar_width = bar_width - single_space_width * bin_number;
         for (var i = 0;i < bin_number; i++) {
             var focus_bin_height = transformed_bin_focus[i] / max_bin * (ybottom - ytop - 5 * that.scale);
             var others_bin_height = transformed_bin_others[i] / max_bin * (ybottom - ytop - 5 * that.scale);
@@ -193,9 +193,9 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
             focus_bin_height = focus_bin_height * (that.currentFrame / that.totalFrames);
             others_bin_height = others_bin_height * (that.currentFrame / that.totalFrames);
 
-            var xleft = Math.round(x_begin);
-            var xright = Math.round(xleft + true_bar_width * bin_widths[k][i] / 100);
-            var single_bar_width = Math.round((xright - xleft) / 2);
+            var xleft = x_begin;
+            var xright = xleft + true_bar_width * bin_widths[k][i] / 100;
+            var single_bar_width = (xright - xleft) / 2;
 
             that.fh_context.fillStyle = hexToRGB(color_manager.get_color(focused_class));
             that.fh_context.fillRect(xleft + single_bar_width + text_width, ybottom - focus_bin_height, single_bar_width, focus_bin_height);

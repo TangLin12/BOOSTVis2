@@ -334,10 +334,12 @@ def get_raw_model_iterations():
             results.append("".join(result))
         return "|".join(results)
 
+
 @app.route('/api/query-dataset', methods=['GET'])
 def query_tag_names():
     datasets = listdir_sorted_by_date(join(SERVER_ROOT, "result"))
     return jsonify(datasets)
+
 
 @app.route('/api/query-set-names', methods=['GET'])
 def query_set_names():
