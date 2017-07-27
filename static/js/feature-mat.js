@@ -5,18 +5,12 @@
 function FeatureMatrix(container) {
     var that = this;
     this.container = container;
-    var bbox = that.container.node().getBoundingClientRect();
-
-    that.width = bbox.width;
-    that.height = bbox.height;
-
     that.container.select("canvas").remove();
-    that.scale = 1;
-    this.fh_canvas = this.container.append("canvas")
-        .attr("width", that.width * that.scale)
-        .attr("height", that.height * that.scale)
-        .node();
+    this.fh_canvas = this.container.append("canvas").node();
     this.fh_context = this.fh_canvas.getContext('2d');
+
+    that.scale = 1;
+    this.resize();
 
     that.fh_canvas.top_gap = 30 * that.scale;
     that.fh_canvas.left_gap = 1;
@@ -49,6 +43,18 @@ function add_page_turn_events () {
     });
 }
 
+FeatureMatrix.prototype.resize = function () {
+    var that = this;
+    var bbox = that.container.node().getBoundingClientRect();
+    that.width = bbox.width;
+
+    that.height = bbox.height;
+    that.fh_canvas.width = that.width * that.scale;
+    that.fh_canvas.height = that.height * that.scale;
+    that.refresh_canvas();
+    console.log(that.fh_canvas.width, that.fh_canvas.height);
+};
+
 FeatureMatrix.prototype.clear_canvas = function () {
     this.fh_context.clearRect(0, 0, this.fh_canvas.width, this.fh_canvas.height);
 };
@@ -80,7 +86,7 @@ FeatureMatrix.prototype.refresh_canvas = function () {
 
     if (is_instance_mode() == true) {
         that.render_feature_ranking_with_one_instance();
-    } else if (confidence_lines.cluster_label_set.length > 0) {
+    } else if (confidence_lines_label_length() > 0) {
         if (that.mode == that.importanceMode) {
             that.render_feature_ranking_for_clusters();
         } else {
@@ -124,8 +130,6 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
 
     var focused_class = confidence_lines.focused_class;
     var sorted_features = that.sorted_features;
-
-    //var flags = that.get_used_features();
 
     // drawing codes
     that.clear_canvas();
@@ -232,16 +236,14 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
     }
 };
 
-FeatureMatrix.prototype.display = function () {
-
-};
-
 FeatureMatrix.prototype.render_feature_ranking = function () {
     $('#ranking-hint').css('display', 'inline');
 
     var that = this;
     var focused_class = get_current_focused_class();
-    that.get_average_feature_importance(focused_class);
+    if (!that.get_average_feature_importance(focused_class)) {
+        return false;
+    }
     var features = [];
     for (var k = 0; k < Math.min(that.nFeaturePerPage, FEATURE_COUNT - that.featureStart); k++) {
         features.push(that.sorted_features[k + that.featureStart]['id']);
@@ -794,6 +796,10 @@ FeatureMatrix.prototype.render_separation_features_for_clusters = function () {
 FeatureMatrix.prototype.get_average_feature_importance = function (focused_class) {
     var that = this;
 
+    if (focused_class == undefined || focused_class == -1) {
+        return false;
+    }
+
     var imp = [];
     for (var i = 0; i < FEATURE_COUNT; i++) {
         imp[i] = FEATURE_IMPORTANCE[focused_class * FEATURE_COUNT + i];
@@ -809,6 +815,7 @@ FeatureMatrix.prototype.get_average_feature_importance = function (focused_class
     imp2 = _.sortBy(imp2, function(obj){return -obj['value'];});
 
     that.sorted_features = imp2;
+    return true;
 };
 
 FeatureMatrix.prototype.get_average_feature_importance2 = function (focused_class) {

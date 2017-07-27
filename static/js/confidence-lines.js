@@ -67,8 +67,17 @@ function ConfidenceLines(container) {
     that.mode = that.clusterMode;
 }
 
+ConfidenceLines.prototype.resize = function () {
+    var that = this;
+    that.width = confusion_matrix.width;
+    that.height = confusion_matrix.height;
+    that.cl_canvas.width = that.width;
+    that.cl_canvas.height = that.height;
+    that.render_instance_charts(that.focused_class, that.cluster_label, that.cluster_id);
+};
+
 ConfidenceLines.prototype.canvas_mouseout = function () {
-    this.render_instance_charts(this.focused_class, this.cluster_label, this.cluster_id, this.focused_segment, this.focused_subsegment);
+    this.render_instance_charts(this.focused_class, this.cluster_label, this.cluster_id);
     document.getElementsByTagName("html").item(0).style.cursor = "";
 };
 
@@ -118,10 +127,10 @@ ConfidenceLines.prototype.canvas_mousemove = function (loc, canvas) {
             }
         }
         if (mouseType != "") {
-            document.getElementsByTagName("html").item(0).style.cursor=mouseType;
+            canvas.style.cursor = mouseType;
         }
         else {
-            document.getElementsByTagName("html").item(0).style.cursor=mouseType;
+            canvas.style.cursor = mouseType;
             that.render_instance_charts(that.focused_class, -1, -1, that.focused_segment, that.focused_subsegment);
         }
     }
@@ -554,7 +563,7 @@ ConfidenceLines.prototype.perform_clustering_on_instances = function (focused_cl
     return res;
 };
 
-ConfidenceLines.prototype.render_instance_charts = function (focused_class, cluster_label, cluster_id, mousePos, subSegment) {
+ConfidenceLines.prototype.render_instance_charts = function (focused_class, cluster_label, cluster_id) {
     var that = this;
 
     that.cl_context.clearRect(0, 0, that.cl_canvas.width, that.cl_canvas.height);

@@ -66,7 +66,7 @@ def get_feature_matrix_for_cluster():
     ware_house = WareHouse(dataset_identifier, project_root)
     for feature_id in features:
         row = []
-        widths.append(features_split_widths[feature_id])
+        widths.append(features_split_widths[feature_id].tolist())
         bins = features_split_values[feature_id]
         for i in range(size):
             instance_ids = ware_house.get_instances_by_cluster(set_type, class_id, cluster_classes[i], cluster_ids[i])
@@ -110,7 +110,7 @@ def get_feature_matrix_for_class():
     count = 0
     for feature_id in features:
         bins = features_split_values[feature_id]
-        widths.append(features_split_widths[feature_id])
+        widths.append(features_split_widths[feature_id].tolist())
         row = []
         for i in range(2):
             feature_values = [feature_raw[instance_id][feature_id] for instance_id in class_instance_ids[i]]

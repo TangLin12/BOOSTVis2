@@ -8,9 +8,6 @@ var show_tree_classifier = function (iteration, class_) {
     iteration = Math.min(iteration, ITERATION_COUNT - 1);
     tree_inspector.draw_tree(iteration, class_);
     tree_list_highlight(iteration, class_);
-    //  edit by Changjian, 17/7/18
-    // it concerns navigation which is not involved in  this edition.
-    // on_timepoint_highlight(iteration);
 };
 
 var recluster_tree_classifier = function (number) {
@@ -38,8 +35,19 @@ var update_tree_view_header_indicator = function (iteration, class_) {
 };
 
 var is_instance_mode = function () {
+    if (confidence_lines == undefined) {
+        return false;
+    }
     return (confidence_lines.activated == true
                     && confidence_lines.mode == confidence_lines.instanceMode);
+};
+
+var confidence_lines_label_length = function () {
+    if (confidence_lines) {
+        return confidence_lines.cluster_label_set.length;
+    } else {
+        return 0;
+    }
 };
 
 var tree_list_highlight = function (tree_index, class_) {
@@ -50,7 +58,11 @@ var tree_list_highlight = function (tree_index, class_) {
 };
 
 var get_current_focused_class = function () {
-    return confidence_lines.focused_class;
+    if (confidence_lines) {
+        return confidence_lines.focused_class;
+    } else {
+        return -1;
+    }
 };
 
 var focus_on_class = function (focused_class) {
@@ -90,30 +102,6 @@ var click_class = function (label) {
     }
 };
 
-// add by Changjian , 2017/7/13
-var retrieve_clustering = function( class_, callback){
-    console.log("request clustering", class_);
-    if ( CLUSTERING_ALL[class_]){
-        callback( CLUSTERING_ALL[class_]);
-    }
-    else{
-        var task = '/api/clustering-by-class' + PARAMS + "&class_=" + class_;
-        var oReq = new XMLHttpRequest();
-        oReq.open( "GET", task, true);
-        oReq.responseType = "arraybuffer";
-        oReq.setRequestHeader("cache-control", "no-cache");
-        oReq.onload = function(oEvent){
-            var arrayBuffer = oReq.response;
-            if( arrayBuffer){
-                var byteArray = new Float32Array(arrayBuffer);
-                CLUSTERING_ALL[class_] = byteArray;
-                callback( POSTERIOR_ALL[class_]);
-            }
-        };
-        oReq.send(null);
-    }
-};
-
 var add_loading_circle = function (container, min_gap) {
     var elem = d3.select(".origin-holder>.preloader-wrapper").node().cloneNode(true);
     var bbox = container.node().getBoundingClientRect();
@@ -136,7 +124,7 @@ var remove_loading_circle = function (container) {
     container.selectAll(".preloader-wrapper").remove();
 };
 
-function add_options(target, options) {
+var add_options = function (target, options) {
     var select = document.getElementById(target);
 
     for (var i = 0; i < options.length; i++){
@@ -147,6 +135,11 @@ function add_options(target, options) {
     }
 }
 
+var window_resize = function (width, height) {
+    confusion_matrix.resize();
+    confidence_lines.resize();
+    feature_matrix.resize();
+};
 var show_positive_instances_link = function() {
     var nodes = tree_inspector.resultTree.baseSvg.selectAll('.node');
     nodes.each(function(n,i){

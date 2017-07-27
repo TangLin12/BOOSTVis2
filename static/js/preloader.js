@@ -21,9 +21,6 @@ PreLoader.prototype.show = function () {
         .duration(200)
         .style("opacity", 1);
     that.info_header.text("Loading " + (WINDOW_WIDTH < 1204 ? "" : "Progress ") + "(" + DATASET + "-" + SETNAME + ")");
-    //setTimeout(function () {
-    //    that.element.style("display", "block");
-    //}, 200);
 };
 
 PreLoader.prototype.hide = function () {
@@ -33,9 +30,6 @@ PreLoader.prototype.hide = function () {
         .duration(2000)
         .style("opacity", 0)
         .style("pointer-events", "none");
-    //setTimeout(function () {
-    //    that.element.style("display", "none");
-    //}, 2000);
 };
 
 PreLoader.prototype.load_instance_timepoint = function(timepoints, that) {
