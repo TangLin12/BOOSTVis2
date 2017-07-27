@@ -3,7 +3,7 @@ import lightgbm as lgb
 from os.path import join
 import pandas as pd
 import os
-from scripts import processor
+from scripts.processor import *
 import pandas as pd
 import os
 from os.path import join
@@ -69,7 +69,7 @@ def load_toy1() -> object:
 
 
 def LightGBMTest():
-	dataset = load_otto()
+	dataset = load_toy1()
 	label = dataset["train"]["y"]
 	lgb_train = lgb.Dataset(dataset["train"]["X"], dataset["train"]["y"])
 	lgb_valid = lgb.Dataset(dataset["valid"]["X"], dataset["valid"]["y"])
@@ -87,7 +87,7 @@ def LightGBMTest():
 		'bagging_fraction': 0.8,
 		'bagging_freq': 5,
 		'verbose': 0,
-		'num_boost_round': 100,
+		'num_boost_round': 200,
 		'num_class': len(np.unique(label))
 	}
 
@@ -97,9 +97,17 @@ def LightGBMTest():
 				valid_sets=[lgb_valid],  # eval training data
 				feature_name=feature_name,
 				categorical_feature=[21])
-	p = processor.LightGBMProcess(booster, dataset["train"], {
+
+	p = LightGBMProcess(
+		booster,
+		dataset["train"],
+		{
 		"valid_1": dataset["valid"]
-	}, params, join("..","result", "result-test"))
+		},
+		params,
+		join("..","result", "result-toy")
+	)
+
 	p.process()
 
 

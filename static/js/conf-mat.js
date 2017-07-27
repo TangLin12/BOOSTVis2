@@ -105,7 +105,6 @@ FlowingConfusionMatrix.prototype.set_segment_count = function (T) {
 
 FlowingConfusionMatrix.prototype.set_endpoints_data = function (endpoints) {
     var that = this;
-
     that.endpoints = endpoints;
 };
 
@@ -117,6 +116,18 @@ FlowingConfusionMatrix.prototype.refresh_canvas = function () {
 
 FlowingConfusionMatrix.prototype.get_class_color = function (class_label) {
     return color_manager.get_color(this.ranking[class_label]);
+};
+
+FlowingConfusionMatrix.prototype.resize = function () {
+    var that = this;
+    var bbox = that.container.node().getBoundingClientRect();
+    that.width = bbox.width;
+    that.height = bbox.height;
+
+    that.canvas.width = that.width;
+    that.canvas.height = that.height * 0.93;
+
+    that.refresh_canvas();
 };
 
 FlowingConfusionMatrix.prototype.render_view = function () {
@@ -722,14 +733,14 @@ FlowingConfusionMatrix.prototype.canvas_mouse_move_new = function (e) {
                 if (loc.y > parent.layout['yt'][t][i][0] && loc.y < parent.layout['yb'][t][i][M - 1]) {
                     flag = 1;
                     parent.highlight_class = i;
-                    document.getElementsByTagName("html").item(0).style.cursor="pointer";
+                    this.style.cursor="pointer";
                     break;
                 }
             }
 
             if (flag == 0) {
                 parent.highlight_class = null;
-                document.getElementsByTagName("html").item(0).style.cursor="";
+                this.style.cursor="";
             }
 
             parent.pointed_segment = t;

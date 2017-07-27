@@ -5,7 +5,7 @@
 var preloader = new PreLoader();
 
 // vis components
-var class_selector, feature_matrix, confusion_matrix, confidence_lines,tree_inspector, tree_list, treesize_barchart ;
+var class_selector, feature_matrix, confusion_matrix, confidence_lines, tree_inspector, tree_list, treesize_barchart;
 
 
 var load_data = function () {
@@ -22,11 +22,22 @@ var load_data = function () {
 };
 
 $(document).ready(function () {
-    var frame_selector = d3.select("#" + DATASET_SELECTOR);
-    var set_selector = d3.select("#" + SETNAME_SELECTOR);
+    var last_resize_time = Date.now();
+    $(window).resize(function () {
+        var cur_time = Date.now();
+        if (cur_time > last_resize_time + REFRESH_PERIOD) {
+            window_resize(window.innerWidth, window.innerHeight);
+            last_resize_time = cur_time;
+        } else {
+            //last_resize_time += REFRESH_PERIOD;
+        }
+    });
+
     var loading_button = d3.select('#load-dataset');
 
     loading_button.on("click", function () {
+        DATASET = document.getElementById(DATASET_SELECTOR).value;
+        SETNAME = document.getElementById(SETNAME_SELECTOR).value;
         load_data();
     });
 
