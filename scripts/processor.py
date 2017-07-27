@@ -203,11 +203,12 @@ class LightGBMProcess(AbstractProcessor):
                 features = line.replace("split_feature=", "") \
                     .replace("\n", "").split(" ")
             elif line.startswith("split_gain="):
-                feaure_gain = line.replace("split_gain=", "").replace("\n", "").split(" ")
+
+                feature_gain = line.replace("split_gain=", "").replace("\n", "").split(" ")
                 for j, f in enumerate(features):
                     if len(f) == 0: # for case: "".split(" ")
                         continue
-                    g = float(feaure_gain[j])
+                    g = float(feature_gain[j])
                     feature_gains[cur_class][int(f)] += g / normalizer
                 new_tree = False
 

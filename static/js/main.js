@@ -53,4 +53,10 @@ $(document).ready(function () {
     }, "json", "GET");
 
     metadata_node.notify();
+
+    $(".hide-positive-instance-link").click(function () {
+        hide_positive_instance_link();
+    });
+
+    loading_button.node().click();
 });

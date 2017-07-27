@@ -400,11 +400,15 @@
         _this.treeCut.treeCut();
     };
 
-    this.applyCluster = function (count_on_nodes, split_color, finished) {
-        _this.split_colors.push(split_color);
+    // add by Changjian,  seperate data updating and layout function to avoid repeating layout rending. 2017/7/24
+    this.setColorAndCountdata = function(count_on_nodes, color){
+        _this.split_colors.push(color);
         for (var i = 0; i < count_on_nodes.length; i++) {
             _this.treeNodeDic[i].raw_splits.push(count_on_nodes[i]);
         }
+    };
+    // edit by Changjian, seperate data updating and layout function to avoid repeating layout rending. 2017/7/24
+    this.applyCluster = function () {
         _this.normalizeTree();
         var selectionArr = _this.DOI();
         var _selectionArr = new Array();
@@ -596,10 +600,11 @@
         var drawLink = _this.drawLink;
         var nodeUpdate = drawNode.updateNodes(node, draggingNode);
 
-        drawNode.drawBar.updateBars(node, _this.split_colors);
-        drawNode.drawPin.updatePins(nodeUpdate);
-        drawNode.drawDepthNode.updateDepthNodes(nodeUpdate);
-        drawNode.drawRestNode.updateRestNode(nodeUpdate);
+        // remove by Changjian, 2017/7/24
+        // drawNode.drawBar.updateBars(node, _this.split_colors);
+        //drawNode.drawPin.updatePins(nodeUpdate);
+        // drawNode.drawDepthNode.updateDepthNodes(nodeUpdate);
+        // drawNode.drawRestNode.updateRestNode(nodeUpdate);
 
         drawNode.drawNodeLabel.updateLabels(node);
         drawNode.drawHighlightRect.updateHighlightRects(node);
@@ -775,12 +780,14 @@
         var drawLink = _this.drawLink;
         var nodeEnter = drawNode.createNodes(node);
         nodeEnter.on('click', _this.click);
-        drawNode.drawConnectRect.creatRects(nodeEnter);
+        //remmove by Changjian, 2017/7/24
+        //drawNode.drawConnectRect.creatRects(nodeEnter);
         drawNode.drawNodeLabel.creatLabels(node);
-        drawNode.drawPin.createPins(nodeEnter, _this.treeCut);
-        drawNode.drawDepthNode.createDepthNodes(nodeEnter);
-        drawNode.drawRestNode.createRestNodes(nodeEnter);
-        drawNode.drawBar.createBars(node);
+        //remmove by Changjian, 2017/7/24
+        //drawNode.drawPin.createPins(nodeEnter, _this.treeCut);
+        // drawNode.drawDepthNode.createDepthNodes(nodeEnter);
+        // drawNode.drawRestNode.createRestNodes(nodeEnter);
+        // drawNode.drawBar.createBars(node);
         drawLink.showRestLinks(node, split_length);
         drawNode.drawHighlightRect.createHighlightRects(node);
         _this.highLightNodes(nodeEnter, d);
@@ -929,12 +936,14 @@
         var nodeExit = drawNode.exitNodes(node);
         nodeExit.remove();
         nodeEnter.on('click', _this.click);
-        drawNode.drawConnectRect.creatRects(nodeEnter);
+        //remove by Changjian, 2017/7/24
+        //drawNode.drawConnectRect.creatRects(nodeEnter);
         drawNode.drawNodeLabel.creatLabels(nodeEnter);
-        drawNode.drawPin.createPins(nodeEnter, _this.treeCut);
-        drawNode.drawDepthNode.createDepthNodes(nodeEnter);
-        drawNode.drawRestNode.createRestNodes(nodeEnter);
-        drawNode.drawBar.createBars(node);
+        //remmove by Changjian, 2017/7/24
+        // drawNode.drawPin.createPins(nodeEnter, _this.treeCut);
+        // drawNode.drawDepthNode.createDepthNodes(nodeEnter);
+        // drawNode.drawRestNode.createRestNodes(nodeEnter);
+        // drawNode.drawBar.createBars(node);
         drawLink.showRestLinks(nodeEnter, split_length);
         drawNode.drawHighlightRect.createHighlightRects(nodeEnter);
         _this.highLightNodes(nodeEnter, d);
@@ -945,10 +954,11 @@
         // var nodeAll = node.copy()
         var draggingNode = _this.draggingNode;
         var nodeUpdate = drawNode.updateNodes(node, draggingNode);
-        drawNode.drawBar.updateBars(node, _this.split_colors);
-        drawNode.drawPin.updatePins(nodeUpdate);
-        drawNode.drawDepthNode.updateDepthNodes(nodeUpdate);
-        drawNode.drawRestNode.updateRestNode(nodeUpdate);
+        // drawNode.drawBar.updateBars(node, _this.split_colors);
+        //remmove by Changjian, 2017/7/24
+        // drawNode.drawPin.updatePins(nodeUpdate);
+        // drawNode.drawDepthNode.updateDepthNodes(nodeUpdate);
+        // drawNode.drawRestNode.updateRestNode(nodeUpdate);
         var nodeOld = [];
         for (var i = 0; i < node[0].length; i++) {
             if (node[0][i] == nodeEnter[0][i]) {
