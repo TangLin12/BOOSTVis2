@@ -46,9 +46,6 @@ $(document).ready(function () {
             new RequestNode(SERVER_BASE_URL + SETNAME_API + "?dataset=" + DATASET,
                 function (r) {
                     setname_handler(r, function () {
-                        $(".hide-positive-instance-link").click(function () {
-                            hide_positive_instance_link();
-                        });
                         loading_button.node().click();
                     });
                 }, "json", "GET").notify();
@@ -56,4 +53,7 @@ $(document).ready(function () {
     }, "json", "GET");
 
     metadata_node.notify();
+    $(".hide-positive-instance-link").click(function () {
+        hide_positive_instance_link();
+    });
 });
