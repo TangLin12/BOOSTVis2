@@ -187,7 +187,7 @@ FeatureMatrix.prototype.render_feature_ranking_partially = function () {
             max_bin = Math.max(max_bin, transformed_bin_others[i]);
         }
 
-        var single_space_width = 0.05 * bar_width;
+        var single_space_width = Math.min(0.05, 1.0 / 3.0 / bin_number) * bar_width;
         var x_begin = single_space_width / 2;
         var true_bar_width = bar_width - single_space_width * bin_number;
         for (var i = 0;i < bin_number; i++) {
@@ -344,8 +344,8 @@ FeatureMatrix.prototype.render_feature_ranking_with_one_instance_partially = fun
             max_bin = Math.max(max_bin, transformed_bin_others[i]);
         }
 
-        var single_space_width = 0.05 * bar_width;
-        var x_begin = single_space_width;
+        var single_space_width = Math.min(0.05, 1.0 / 3.0 / bin_number) * bar_width;
+        var x_begin = single_space_width / 2;
         var true_bar_width = bar_width - single_space_width * bin_number;
 
         for (var i = 0;i < bin_number; i++) {
@@ -504,14 +504,14 @@ FeatureMatrix.prototype.render_feature_ranking_for_clusters_partially = function
             }
         }
 
-        var single_space_width = 0.05 * bar_width;
-        var x_begin = single_space_width;
-        var true_bar_width = bar_width - single_space_width * (bin_number - 1);
+        var single_space_width = Math.min(0.05, 1.0 / 3.0 / bin_number) * bar_width;
+        var x_begin = single_space_width / 2;
+        var true_bar_width = bar_width - single_space_width * bin_number;
 
         for (var i = 0;i < bin_number; i++) {
-            var xleft = Math.round(x_begin);
-            var xright = Math.round(xleft + true_bar_width * bin_widths[k][i] / 100);
-            var single_bar_width = Math.round((xright - xleft) / 2);
+            var xleft = x_begin;
+            var xright = xleft + true_bar_width * bin_widths[k][i] / 100;
+            var single_bar_width = (xright - xleft) / 2;
             x_begin = xright + single_space_width;
 
             var bin_height = [];
@@ -670,14 +670,14 @@ FeatureMatrix.prototype.render_separation_features_for_clusters_partially = func
             }
         }
 
-        var single_space_width = 0.05 * bar_width;
-        var x_begin = single_space_width;
-        var true_bar_width = bar_width - single_space_width * (bin_number - 1);
+        var single_space_width = Math.min(0.05, 1.0 / 3.0 / bin_number) * bar_width;
+        var x_begin = single_space_width / 2;
+        var true_bar_width = bar_width - single_space_width * bin_number;
 
         for (var i = 0;i < bin_number; i++) {
-            var xleft = Math.round(x_begin);
-            var xright = Math.round(xleft + true_bar_width * bin_widths[k][i] / 100);
-            var single_bar_width = Math.round((xright - xleft) / 2);
+            var xleft = x_begin;
+            var xright = xleft + true_bar_width * bin_widths[k][i] / 100;
+            var single_bar_width = (xright - xleft) / 2;
             x_begin = xright + single_space_width;
 
             var bin_height = [];
